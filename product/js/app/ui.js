@@ -906,6 +906,11 @@ function buildDolphinDetailsHtml(r) {
                     </div>
                     ${notes[m.key] && String(notes[m.key]).trim()
                         ? `<div class="dol-view-memo">${escapeHtml(String(notes[m.key]))}</div>` : ''}
+                    ${(() => {
+                        const pics = (Array.isArray(r.photos) ? r.photos : []).filter((ph) => ph.kind === `menu:${m.key}`);
+                        return pics.length ? `<div class="dol-view-photos">${pics.map((ph) => `
+                            <div class="photo-thumb photo-thumb-view"><img data-photo-fill="${escapeHtml(ph.id)}" alt="${escapeHtml(m.name)} の写真"></div>`).join('')}</div>` : '';
+                    })()}
                 </div>`).join('')}
         </div>`;
 }
@@ -5732,6 +5737,18 @@ function initApp() {
                          data-dol-note-for="${escapeHtml(m.key)}">${escapeHtml(priceNote(m))}</div>
                     <textarea class="form-control dol-memo" rows="2" data-dol-memo="${escapeHtml(m.key)}"
                               placeholder="${escapeHtml(m.name)} のメモ" aria-label="${escapeHtml(m.name)} のメモ">${escapeHtml(recordMenuNotes[m.key] || '')}</textarea>
+                    <div class="dol-photos">
+                        ${recordPhotos.filter((ph) => ph.kind === `menu:${m.key}`).map((ph) => `
+                            <div class="dol-photo">
+                                <img data-photo-fill="${escapeHtml(ph.id)}" alt="${escapeHtml(m.name)} の写真">
+                                <button type="button" class="dol-photo-del" data-dol-photo-del="${escapeHtml(ph.id)}"
+                                        aria-label="この写真を外す">×</button>
+                            </div>`).join('')}
+                        <label class="dol-camera" title="写真を撮る・選ぶ">
+                            <span aria-hidden="true">📷</span><span class="dol-camera-txt">写真</span>
+                            <input type="file" accept="image/*" multiple hidden data-dol-photo="${escapeHtml(m.key)}">
+                        </label>
+                    </div>
                 </div>`).join('')}
             ${dolphinPickerOpen ? `
                 <div class="dol-picker">
@@ -5766,8 +5783,11 @@ function initApp() {
             b.onclick = () => {
                 const key = b.dataset.dolRemove;
                 const memo = recordMenuNotes[key];
-                if (memo && String(memo).trim() && !confirm('この施術のメモも消えます。外しますか？')) return;
+                const pics = recordPhotos.filter((ph) => ph.kind === `menu:${key}`).length;
+                if (((memo && String(memo).trim()) || pics)
+                    && !confirm(`この施術の${pics ? 'メモと写真' : 'メモ'}も消えます。外しますか？`)) return;
                 delete recordMenuNotes[key];
+                recordPhotos = recordPhotos.filter((ph) => ph.kind !== `menu:${key}`);
                 recordMenu.remove(key);
                 renderDolphin();
             };
@@ -5790,6 +5810,42 @@ function initApp() {
         host.querySelectorAll('[data-dol-memo]').forEach((ta) => {
             ta.addEventListener('input', () => { recordMenuNotes[ta.dataset.dolMemo] = ta.value; });
         });
+        // 写真。実物は端末の中（IndexedDB）、記録には控えだけを持つ。保存を押すまで記録には結び付かない
+        host.querySelectorAll('[data-dol-photo]').forEach((input) => {
+            input.onchange = async (e) => {
+                const key = input.dataset.dolPhoto;
+                const files = Array.from(e.target.files || []);
+                input.value = '';
+                if (files.length === 0) return;
+                if (photoStoreOk === null) photoStoreOk = await isPhotoStoreAvailable();
+                if (!photoStoreOk) { showToast('この端末では写真を保存できません。', 'error'); return; }
+                let added = 0;
+                for (const file of files) {
+                    try {
+                        const meta = await savePhoto(file, { kind: `menu:${key}` });
+                        meta.no = nextPhotoNo(recordPhotos, meta.kind);
+                        recordPhotos.push(meta);
+                        added += 1;
+                    } catch (err) {
+                        showToast(err.message || '写真を保存できませんでした。', 'error');
+                    }
+                }
+                if (added > 0) showToast(`写真を${added}枚付けました`, 'success');
+                renderDolphin();
+                scheduleAutosave();
+            };
+        });
+        host.querySelectorAll('[data-dol-photo-del]').forEach((b) => {
+            b.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = b.dataset.dolPhotoDel;
+                recordPhotos = recordPhotos.filter((ph) => ph.id !== id);
+                renderDolphin();
+                scheduleAutosave();
+            };
+        });
+        hydratePhotoThumbs(host);
     }
 
     function paintDolphinTotal() {
@@ -5860,15 +5916,22 @@ function initApp() {
         const colorGroup = document.getElementById('record-color-group');
         if (colorGroup && park) park.appendChild(colorGroup);
 
-        const chosen = SERVICE_CATEGORY_DEFS.filter((c) => recordCategories.includes(c.key));
+        // 書くのは🐬の施術カード（メモ・写真）。区分ごとのカルテは出さない。
+        // 出すのは、色を選ぶ欄がある「color」と、以前の記録ですでにメモや
+        // 写真が入っている区分だけ（書いたものを見えなくしないため）。
+        const hasContent = (key) => Boolean(((recordKartes[key] || {}).note || '').trim())
+            || recordPhotos.some((p) => p.kind === key);
+        const chosen = SERVICE_CATEGORY_DEFS.filter((c) => recordCategories.includes(c.key)
+            && (c.key === 'color' || hasContent(c.key)));
 
-        // 区分に当てはまらない写真（以前の記録のもの）は、行き場を作って残す
+        // 区分に当てはまらない写真（以前の記録のもの）は、行き場を作って残す。
+        // 🐬の施術に付けた写真（menu:〜）は施術カードに出るので除く
         const knownKinds = SERVICE_CATEGORY_DEFS.map((c) => c.key);
-        const strays = recordPhotos.filter((p) => !knownKinds.includes(p.kind));
+        const strays = recordPhotos.filter((p) => !knownKinds.includes(p.kind)
+            && !String(p.kind || '').startsWith('menu:'));
 
         if (chosen.length === 0 && strays.length === 0) {
-            host.innerHTML = `<div class="karte-empty">
-                🐬で施術を追加すると、その施術のカルテ（色・写真など）がここに開きます。</div>`;
+            host.innerHTML = '';
             return;   // 色の欄は控えの場所に置いたまま（そこは隠してある）
         }
 

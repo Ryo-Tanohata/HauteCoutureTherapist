@@ -7272,3 +7272,26 @@ body {
 .dol-view-name { font-weight: 700; flex: 1; }
 .dol-view-amount { font-variant-numeric: tabular-nums; }
 .dol-view-memo { color: var(--text-secondary); padding-left: 1.6em; white-space: pre-wrap; }
+
+/* 🐬 施術カードの写真 */
+.dol-photos { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dol-photo { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-glass); }
+.dol-photo img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; display: block; }
+.dol-photo-del {
+    position: absolute; top: 2px; right: 2px;
+    width: 24px; height: 24px; border-radius: 999px;
+    border: none; background: rgba(0, 0, 0, 0.6); color: #fff;
+    font-size: 0.8rem; line-height: 1; cursor: pointer;
+}
+.dol-camera {
+    display: inline-flex; align-items: center; gap: 4px;
+    min-height: 44px; padding: 0 14px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-glass);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.dol-camera span[aria-hidden] { font-size: 1.1rem; }
+.dol-view-photos { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 1.6em; margin-top: 4px; }
+.dol-view-photos .photo-thumb { width: 56px; height: 56px; }
