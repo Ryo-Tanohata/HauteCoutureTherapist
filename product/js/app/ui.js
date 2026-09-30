@@ -6642,20 +6642,84 @@ function initApp() {
             freeTextMerges: JSON.parse(localStorage.getItem('therapist_freetext_merges') || '{}'),
             photos
         };
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
         const d = new Date();
         const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+        const fileName = `therapist-backup-${stamp}.json`;
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const done = () => {
+            markBackupDone(payload.exportedAtISO);
+            renderBackupReminder();
+            setBackupStatus(`書き出しました（写真 ${photos.length}枚を含む）`, 'ok');
+            hideBackupShareButton();
+        };
+
+        // iPhone・iPad は、リンクを押させる形だとファイルとして保存されない
+        // （Safari で中身が開くだけ／ホーム画面から開くと何も起きない）。
+        // 共有シートを出して「"ファイル"に保存」や AirDrop で持ち出してもらう。
+        if (isAppleTouchDevice()) {
+            let file = null;
+            try { file = new File([blob], fileName, { type: 'application/json' }); } catch (e) { /* 古い端末 */ }
+            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                const share = async () => {
+                    try {
+                        await navigator.share({ files: [file], title: fileName });
+                        done();
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') {
+                            // 共有シートを閉じた。控えは取れていないので、取った扱いにしない
+                            setBackupStatus('保存を取りやめました。もう一度「💾 保存先を選ぶ」を押せば保存できます。');
+                            showBackupShareButton(share);
+                        } else {
+                            // 写真を読んでいる間に「押した」ことが古くなると、共有を断られる。
+                            // もう一度押してもらえば、その場で開ける
+                            setBackupStatus('準備ができました。下の「💾 保存先を選ぶ」を押してください。', 'ok');
+                            showBackupShareButton(share);
+                        }
+                    }
+                };
+                setBackupStatus('保存先を選んでください（「"ファイル"に保存」がおすすめです）。');
+                await share();
+                return;
+            }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
         a.href = url;
-        a.download = `therapist-backup-${stamp}.json`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
-        markBackupDone(payload.exportedAtISO);
-        renderBackupReminder();
-        setBackupStatus(`書き出しました（写真 ${photos.length}枚を含む）`, 'ok');
+        done();
+    }
+
+    /** iPhone・iPad か。iPadOS の Safari は Mac のふりをするので、指で触れるかも見る */
+    function isAppleTouchDevice() {
+        const ua = navigator.userAgent || '';
+        return /iPhone|iPad|iPod/.test(ua)
+            || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
+    }
+
+    /** 共有シートを開き直すボタン。押したその場で開くので、断られない */
+    function showBackupShareButton(onTap) {
+        const status = document.getElementById('backup-status');
+        if (!status) return;
+        let btn = document.getElementById('btn-backup-share');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            btn.id = 'btn-backup-share';
+            btn.className = 'btn-primary backup-share-btn';
+            btn.textContent = '💾 保存先を選ぶ';
+            status.insertAdjacentElement('afterend', btn);
+        }
+        btn.hidden = false;
+        btn.onclick = () => { onTap(); };
+    }
+    function hideBackupShareButton() {
+        const btn = document.getElementById('btn-backup-share');
+        if (btn) btn.hidden = true;
     }
 
     /**

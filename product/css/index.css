@@ -7129,3 +7129,6 @@ body {
 #constitution-editor.is-readonly input,
 #constitution-editor.is-readonly button { cursor: default; }
 #constitution-editor.is-readonly .constitution-free-add { display: none; }
+
+.backup-share-btn { width: 100%; margin-top: 10px; }
+.backup-share-btn[hidden] { display: none; }
