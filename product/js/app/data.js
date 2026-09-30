@@ -180,6 +180,14 @@ export function menuTotal(keys, adhoc = {}) {
     (Array.isArray(keys) ? keys : []).forEach((k) => {
         const m = menu.find((x) => x.key === k);
         if (!m || m.amount === 'none') return;
+        // その記録だけの金額（割引・延長など）が入っていれば、定価より優先する
+        const over = adhoc[k];
+        const hasOver = over !== undefined && over !== null && String(over).trim() !== '' && !Number.isNaN(Number(over));
+        if (hasOver && m.amount !== null && m.amount !== undefined) {
+            total += Number(over);
+            priced = true;
+            return;
+        }
         if (m.amount === null || m.amount === undefined) {
             const v = adhoc[k];
             if (v === undefined || v === null || String(v).trim() === '' || Number.isNaN(Number(v))) {

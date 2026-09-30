@@ -5398,9 +5398,15 @@ function initApp() {
                 if (m.field) btn.dataset.cat = m.field;
                 btn.title = m.name;
                 btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                // 今回だけの金額に書き換えてあれば、そちらを出す
+                const over = on ? st.adhoc[m.key] : undefined;
+                const overridden = over !== undefined && String(over).trim() !== ''
+                    && m.amount !== null && m.amount !== undefined && m.amount !== 'none'
+                    && Number(over) !== Number(m.amount);
                 btn.innerHTML = `<span class="service-cat-icon">${m.icon}</span>
                     <span class="service-cat-name">${escapeHtml(m.name)}</span>
-                    <span class="service-cat-price">${escapeHtml(priceLabel(m.amount))}</span>`;
+                    <span class="service-cat-price">${escapeHtml(overridden
+                        ? `${Number(over).toLocaleString()}円（今回）` : priceLabel(m.amount))}</span>`;
                 btn.onclick = () => {
                     // 押したら入る、もう一度押したら外れる
                     st.touched = true;
@@ -5416,29 +5422,43 @@ function initApp() {
                 host.appendChild(btn);
             });
 
-            // 金額がその都度のものだけ、入れる欄を出す
+            // 選んだものの金額を、この記録の中で直せるようにする。
+            // 定価のものは定価が入った状態から始まり、書き換えると「今回だけ」の金額になる
+            // （メニューの定価は変えない）。空にすると定価に戻る。
+            // 金額がその都度のものは、これまでどおり空から入れる。
             const adhocHost = $(ids.adhoc);
             if (adhocHost) {
                 adhocHost.innerHTML = '';
-                menu.filter((m) => st.keys.includes(m.key)
-                        && (m.amount === null || m.amount === undefined)).forEach((m) => {
+                menu.filter((m) => st.keys.includes(m.key) && m.amount !== 'none').forEach((m) => {
+                    const fixed = !(m.amount === null || m.amount === undefined);
                     const row = document.createElement('div');
                     row.className = 'menu-adhoc-row';
                     row.innerHTML = `<span aria-hidden="true">${m.icon}</span><span class="nm"></span>`;
-                    row.querySelector('.nm').textContent = `${m.name} の金額`;
+                    row.querySelector('.nm').textContent = fixed
+                        ? `${m.name} の金額（定価 ${Number(m.amount).toLocaleString()}円）`
+                        : `${m.name} の金額`;
                     const inp = document.createElement('input');
                     inp.type = 'number';
                     inp.inputMode = 'numeric';
                     inp.min = '0';
                     inp.step = '100';
-                    inp.placeholder = '0';
+                    inp.placeholder = fixed ? String(m.amount) : '0';
                     inp.dataset.menuAmount = m.key;
                     inp.setAttribute('aria-label', `${m.name} の金額`);
-                    inp.value = st.adhoc[m.key] ?? '';
+                    inp.value = st.adhoc[m.key] ?? (fixed ? String(m.amount) : '');
                     inp.addEventListener('input', () => {
                         st.touched = true;
-                        st.adhoc[m.key] = inp.value;
+                        const v = inp.value.trim();
+                        // 定価と同じ・空なら「今回だけ」を持たない（定価に従う）
+                        if (fixed && (v === '' || Number(v) === Number(m.amount))) delete st.adhoc[m.key];
+                        else st.adhoc[m.key] = inp.value;
                         paintSummary();
+                        // 押す札の値段も、今回の金額に合わせる
+                        const tile = $(ids.grid) && $(ids.grid).querySelector(`[data-menu="${m.key}"] .service-cat-price`);
+                        if (tile) {
+                            tile.textContent = (fixed && st.adhoc[m.key] !== undefined)
+                                ? `${Number(st.adhoc[m.key]).toLocaleString()}円（今回）` : priceLabel(m.amount);
+                        }
                         if (onChange) onChange(st);
                     });
                     row.appendChild(inp);
