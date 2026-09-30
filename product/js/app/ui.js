@@ -5115,6 +5115,7 @@ function initApp() {
         renderCustomerConstitutionDraft();
 
         if (customerModal) customerModal.classList.add('active');
+        markCustomerFormClean();
 
         // 指定されたフィールドがあればフォーカス＆スクロール
         if (focusId) {
@@ -5140,25 +5141,52 @@ function initApp() {
     // 「未入力の印」から生年月日へ連れていくときにだけ残っている。
     // ふだん直すのは「この方のこと」の中の ✏️ から。
 
+    // 顧客登録モーダルの「開いたときの中身」。閉じるときにこれと比べて、
+    // 書きかけがあれば確かめる。外側に指が触れただけで、打った内容が
+    // 消えてしまうのを防ぐため。
+    let customerFormBaseline = null;
+    function customerFormSignature() {
+        const vals = customerForm
+            ? Array.from(customerForm.querySelectorAll('input, textarea, select'))
+                .map((el) => (el.type === 'checkbox' || el.type === 'radio') ? String(el.checked) : el.value)
+            : [];
+        let colors = [];
+        try { colors = getInputSoulColors(); } catch (e) { /* 色の欄が無い画面 */ }
+        return JSON.stringify([vals, colors, constitutionDraft || null]);
+    }
+    function markCustomerFormClean() {
+        customerFormBaseline = customerFormSignature();
+    }
+    function customerFormIsDirty() {
+        return customerFormBaseline !== null && customerFormSignature() !== customerFormBaseline;
+    }
+    /** 登録せずに閉じる。書きかけがあれば確かめる */
+    function closeCustomerModalSafely() {
+        if (customerFormIsDirty()) {
+            const msg = editingCustomer
+                ? '変更はまだ保存されていません。\n保存せずに閉じますか？'
+                : '入力した内容はまだ登録されていません。\n登録せずに閉じますか？（入力した内容は消えます）';
+            if (!confirm(msg)) return;
+        }
+        if (customerModal) customerModal.classList.remove('active');
+        resetCustomerModal();
+        customerFormBaseline = null;
+    }
+
     // 顧客登録モーダル表示・非表示
     if (btnAddCustomer) {
         btnAddCustomer.addEventListener('click', () => {
             resetCustomerModal();
             if (customerModal) customerModal.classList.add('active');
+            markCustomerFormClean();
         });
     }
     if (btnCancelCustomer) {
-        btnCancelCustomer.addEventListener('click', () => {
-            if (customerModal) customerModal.classList.remove('active');
-            resetCustomerModal();
-        });
+        btnCancelCustomer.addEventListener('click', closeCustomerModalSafely);
     }
     if (customerModal) {
         customerModal.addEventListener('click', (e) => {
-            if (e.target === customerModal) {
-                customerModal.classList.remove('active');
-                resetCustomerModal();
-            }
+            if (e.target === customerModal) closeCustomerModalSafely();
         });
     }
 
