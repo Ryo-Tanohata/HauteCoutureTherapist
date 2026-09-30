@@ -6646,16 +6646,69 @@ function initApp() {
         const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
         const fileName = `therapist-backup-${stamp}.json`;
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        const done = () => {
+        await deliverFile(blob, fileName, () => {
             markBackupDone(payload.exportedAtISO);
             renderBackupReminder();
             setBackupStatus(`書き出しました（写真 ${photos.length}枚を含む）`, 'ok');
-            hideBackupShareButton();
-        };
+        });
+    }
 
-        // iPhone・iPad は、リンクを押させる形だとファイルとして保存されない
-        // （Safari で中身が開くだけ／ホーム画面から開くと何も起きない）。
-        // 共有シートを出して「"ファイル"に保存」や AirDrop で持ち出してもらう。
+    /** サンプルの顧客No.。開発者と共有してよいのは、この番号の方だけ */
+    const SAMPLE_CUSTOMER_NO = 'C-0000';
+
+    /**
+     * サンプル（C-0000）だけを書き出す。開発者に渡すためのファイル。
+     *
+     * ほかの顧客は1人も入れない。「消したことの控え」も入れない。
+     * 入れると、読み込んだ側（開発者の端末）で別の顧客が消えることがあるため。
+     * 控えを取った扱い（markBackupDone）にもしない。これは控えではないので。
+     */
+    async function exportSampleData() {
+        const sample = getCustomers().filter((c) => normalizeCustomerNo(c.customerNo) === SAMPLE_CUSTOMER_NO);
+        if (sample.length === 0) {
+            setBackupStatus(`顧客No. ${SAMPLE_CUSTOMER_NO} の方がいません。サンプルを ${SAMPLE_CUSTOMER_NO} で登録してから押してください。`, 'error');
+            return;
+        }
+        setBackupStatus('サンプルを書き出しています…');
+        // サンプルの記録に付いている写真だけを入れる
+        const wanted = new Set();
+        sample.forEach((c) => (c.records || []).forEach((r) => (r.photos || []).forEach((ph) => {
+            const id = ph && typeof ph === 'object' ? ph.id : ph;
+            if (id) wanted.add(String(id));
+        })));
+        let photos = [];
+        if (wanted.size) {
+            try { photos = (await exportAllPhotos()).filter((ph) => wanted.has(String(ph.id))); } catch (e) { /* 写真が無い端末 */ }
+        }
+        const payload = {
+            app: 'therapist-crm',
+            version: BACKUP_VERSION,
+            exportedAtISO: new Date().toISOString(),
+            sampleOnly: true,
+            customers: sample,
+            deletions: { customers: {}, records: {} },
+            colorMasters: JSON.parse(localStorage.getItem('therapist_color_masters') || '[]'),
+            freeTextMerges: {},
+            photos
+        };
+        const d = new Date();
+        const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        await deliverFile(blob, `therapist-sample-${stamp}.json`, () => {
+            setBackupStatus(`サンプル（${SAMPLE_CUSTOMER_NO}）だけを書き出しました。ほかの顧客は入っていません。`, 'ok');
+        });
+    }
+
+    /**
+     * ファイルを端末の外へ渡す。
+     *
+     * iPhone・iPad は、リンクを押させる形だとファイルとして保存されない
+     * （Safari で中身が開くだけ／ホーム画面から開くと何も起きない）。
+     * 共有シートを出して「"ファイル"に保存」や AirDrop で持ち出してもらう。
+     * onDone は、渡せたときだけ呼ぶ（共有シートを閉じたときは呼ばない）。
+     */
+    async function deliverFile(blob, fileName, onDone) {
+        const done = () => { hideBackupShareButton(); onDone(); };
         if (isAppleTouchDevice()) {
             let file = null;
             try { file = new File([blob], fileName, { type: 'application/json' }); } catch (e) { /* 古い端末 */ }
@@ -6666,15 +6719,13 @@ function initApp() {
                         done();
                     } catch (err) {
                         if (err && err.name === 'AbortError') {
-                            // 共有シートを閉じた。控えは取れていないので、取った扱いにしない
                             setBackupStatus('保存を取りやめました。もう一度「💾 保存先を選ぶ」を押せば保存できます。');
-                            showBackupShareButton(share);
                         } else {
                             // 写真を読んでいる間に「押した」ことが古くなると、共有を断られる。
                             // もう一度押してもらえば、その場で開ける
                             setBackupStatus('準備ができました。下の「💾 保存先を選ぶ」を押してください。', 'ok');
-                            showBackupShareButton(share);
                         }
+                        showBackupShareButton(share);
                     }
                 };
                 setBackupStatus('保存先を選んでください（「"ファイル"に保存」がおすすめです）。');
@@ -7354,6 +7405,8 @@ function initApp() {
 
     const btnExport = document.getElementById('btn-export-data');
     if (btnExport) btnExport.onclick = () => exportAllData();
+    const btnExportSample = document.getElementById('btn-export-sample');
+    if (btnExportSample) btnExportSample.onclick = () => exportSampleData();
     const inputImport = document.getElementById('input-import-data');
     if (inputImport) {
         inputImport.onchange = (e) => {

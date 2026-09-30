@@ -7132,3 +7132,28 @@ body {
 
 .backup-share-btn { width: 100%; margin-top: 10px; }
 .backup-share-btn[hidden] { display: none; }
+
+/* サンプルだけ書き出す（開発者に渡す用） */
+.backup-sample {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-glass);
+}
+.backup-sample-btn {
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.backup-sample-note {
+    font-size: 0.74rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 6px 0 0;
+}
