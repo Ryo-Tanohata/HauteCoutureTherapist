@@ -180,22 +180,29 @@ const SCENES = [
         id: '2-1',
         title: '予約の電話が入ったとき',
         run: async (s) => {
+            // 🐬 の「＋ 施術を追加」から選ぶ
+            const addMenu = async (name) => {
+                await s.tap('#btn-dol-toggle');
+                await s.tap(`[data-dol-add]:has-text("${name}")`);
+            };
             await s.say('予約の電話が入ったときの入れ方です');
             await s.say('まず「📅 カレンダー」を開きます');
             await s.tap('#btn-view-calendar');
             await s.say('予約したい日のマスを押します');
             await s.tap('.calendar-day:not(.empty):not(.other-month)', { nth: 8 });
-            await s.say('下に「この日の記録を追加」が出ます');
-            if (await s.has('#inline-record-customer-id')) {
-                await s.look('#inline-record-customer-id', { ms: 1200 });
-                await s.say('お客様を選び、時間と施術内容を入れます');
-                await s.type('#inline-record-type', 'アロマ 60分');
-                if (await s.has('#inline-record-amount')) await s.type('#inline-record-amount', '9000');
-                await s.say('金額や訴えは、あとから書き足せます');
-                await s.look('#btn-inline-submit-record', { ms: 1400 });
-                await s.say('「この記録を保存する」で予約が入ります');
-            }
-            await s.say('カレンダーのマスに、その方の札が出ます');
+            await s.say('「予約・施術記録を追加」を押すと、その日の予約が出ます');
+            await s.tap('#btn-open-booking');
+            await s.say('「この日の記録を書く」を押します');
+            await s.tap('#btn-booking-write');
+            await s.say('お客様と時間を選びます');
+            await s.look('#input-record-customer-id', { ms: 1400 });
+            await s.page.selectOption('#input-time', { index: 29 }).catch(() => {});
+            await s.look('#input-time', { ms: 1200 });
+            await s.say('🐬 の「＋ 施術を追加」から、施術を選びます');
+            await addMenu('再診');
+            await s.say('施術ごとのメモや訴えは、あとから書き足せます');
+            await s.look('#btn-submit-record', { ms: 1400 });
+            await s.say('「記録する」で予約が入り、マスに札が出ます');
         }
     },
     {
@@ -206,15 +213,17 @@ const SCENES = [
             await s.tap('#btn-view-list');
             await s.say('「＋ 顧客登録」を押します');
             await s.tap('#btn-add-customer');
+            await s.say('顧客No. は次の番号が入っています。書き換えてもかまいません');
+            await s.look('#input-customer-no', { ms: 1800 });
+            await s.say('同じ番号は、ほかの方と重ねられません');
             await s.say('必ず要るのは「氏名」だけです');
             await s.type('#input-name', '青木 みどり');
             await s.say('ニックネームは任意。呼んでいる名前があれば');
             await s.type('#input-nickname', 'みどりさん');
             await s.say('よみがなは、名前を打つと自動で入ります');
             await s.look('#input-kana', { ms: 1600 });
-            await s.say('Soul Color を選びます。1色目がその方の色になります');
-            if (await s.has('.soul-slot')) await s.look('.soul-slot', { ms: 1800 });
             await s.say('初診の6つの枠は、あとからでも書けます');
+            await s.say('書きかけで外を押しても、確かめてから閉じます');
             await s.say('最後に「登録する」を押します');
             await s.look('#btn-submit-customer', { ms: 1600 });
         }
@@ -260,33 +269,37 @@ const SCENES = [
         id: '2-6',
         title: '施術のあと、記録を書く',
         run: async (s) => {
+            // 🐬 の「＋ 施術を追加」から選ぶ
+            const addMenu = async (name) => {
+                await s.tap('#btn-dol-toggle');
+                await s.tap(`[data-dol-add]:has-text("${name}")`);
+            };
             await s.say('施術のあと、記録を書き足します');
-            await s.say('大事なこと：新しく作り直さないでください');
             await s.say('予約のときに作った記録を、そのまま開きます');
             await s.tap('#btn-view-list');
             await s.tap('.customer-card-grid-item', { nth: 0 });
             await s.tap('.detail-subtab-btn[data-tab="visit-type"]');
-            if (await s.has('.history-summary')) {
-                await s.tap('.history-summary', { nth: 0 });
-                await s.say('記録の下にある「✏️ 変更」を押します');
-                if (await s.has('.btn-edit-record')) {
-                    await s.tap('.btn-edit-record', { nth: 0 });
-                    // 開いた直後は読むだけ。ここを押してはじめて手が入る
-                    if (await s.has('#btn-toggle-edit-record')) {
-                        await s.say('「編集を有効にする」を押します');
-                        await s.tap('#btn-toggle-edit-record');
-                    }
-                    await s.say('訴え・処方・メモを書き足します');
-                    if (await s.has('#input-client-complaint')) {
-                        await s.type('#input-client-complaint', '右肩の重だるさ');
-                    }
-                    if (await s.has('#input-prescription')) {
-                        await s.type('#input-prescription', '肩甲骨まわりをゆるめる');
-                    }
-                    await s.say('最後に「記録する」で保存します');
-                    if (await s.has('#btn-submit-record')) await s.look('#btn-submit-record', { ms: 1600 });
-                }
+            await s.tap('.history-summary', { nth: 0 });
+            await s.say('記録の下の「✏️」を押します');
+            await s.tap('.btn-edit-record', { nth: 0 });
+            if (await s.has('#btn-toggle-edit-record')) {
+                await s.say('「編集を有効にする」を押します');
+                await s.tap('#btn-toggle-edit-record');
             }
+            await s.say('🌸 には、お客様が言ったことを書きます');
+            await s.type('#input-client-complaint', '右肩の重だるさ');
+            await s.say('🐬 の「＋ 施術を追加」で、した施術を足します');
+            await addMenu('延長');
+            await s.say('施術ごとに、金額とメモと写真が入れられます');
+            await s.type('[data-dol-memo]:visible >> nth=-1', '首まわりを追加で15分');
+            await s.say('金額は定価が入っています。割引などは書き換えます');
+            await s.look('[data-dol-amount] >> nth=-1', { ms: 1600 });
+            await s.say('📷 で、その施術の写真を付けられます');
+            await s.look('.dol-camera >> nth=-1', { ms: 1400 });
+            await s.say('合計は 🐬 の下に出ます');
+            await s.look('#record-dolphin-total', { ms: 1600 });
+            await s.say('最後に「記録する」で保存します');
+            await s.look('#btn-submit-record', { ms: 1400 });
             await s.say('保存すれば、他の端末にも自動で届きます');
         }
     },
@@ -367,17 +380,17 @@ const SCENES = [
             await s.say('よく使うメニューは、登録しておけます');
             await s.tap('#btn-view-calendar');
             await s.tap('.calendar-day:not(.empty):not(.other-month)', { nth: 8 });
-            await s.say('施術内容の欄のそばに「施術内容を編集」があります');
-            if (await s.has('.btn-manage-plans')) {
-                await s.tap('.btn-manage-plans', { nth: 0 });
-                await s.say('ここで足したり、消したりできます');
-                await s.wait(1800);
-                if (await s.has('#btn-add-new-plan')) {
-                    await s.look('#btn-add-new-plan', { ms: 2000 });
-                }
-                await s.say('次からは、選ぶだけになります');
-                if (await s.has('#btn-close-plan-modal')) await s.tap('#btn-close-plan-modal');
-            }
+            await s.tap('#btn-open-booking');
+            await s.tap('#btn-booking-write');
+            await s.say('🐬 の「＋ 施術を追加」を押します');
+            await s.tap('#btn-dol-toggle');
+            await s.say('横の「⚙️ メニューを編集」を押します');
+            await s.tap('#btn-dol-menu-edit');
+            await s.say('ここで足したり、消したりできます');
+            await s.wait(1800);
+            if (await s.has('#btn-add-new-plan')) await s.look('#btn-add-new-plan', { ms: 2000 });
+            await s.say('次からは、選ぶだけになります');
+            if (await s.has('#btn-close-plan-modal')) await s.tap('#btn-close-plan-modal');
         }
     },
     {
@@ -464,9 +477,41 @@ const SCENES = [
             await s.tap('#btn-view-color-settings');
             await s.say('「📤 書き出す」を押すだけです');
             if (await s.has('#btn-export-data')) await s.look('#btn-export-data', { ms: 2200 });
-            await s.say('ファイルが1つ落ちてきます');
+            await s.say('iPhone・iPad では「"ファイル"に保存」を選びます');
             await s.say('この控えは暗号化されていません。そのまま読めます');
             await s.say('メール添付や共有フォルダは避けてください');
+        }
+    },
+    {
+        id: '2-13',
+        title: 'お客様の情報を直す',
+        run: async (s) => {
+            await s.say('名前・顧客No.・アレルギーなどを直します');
+            await s.tap('#btn-view-list');
+            await s.tap('.customer-card-grid-item', { nth: 0 });
+            await s.say('名前を押すと「この方のこと」が開きます');
+            await s.tap('#detail-name-open');
+            await s.say('開いた直後は、読むだけです');
+            await s.say('「✏️ 編集する」を押すと、全部の欄が入力できます');
+            await s.tap('#btn-personal-edit');
+            await s.look('#pe-customer-no', { ms: 1500 });
+            await s.say('体質・アレルギーも、ここで直せます');
+            if (await s.has('#constitution-editor details')) await s.look('#constitution-editor details', { ms: 1800 });
+            await s.type('#pe-memo', 'お茶は温かいほうじ茶');
+            await s.say('最後に「💾 保存する」を1回押せば、全部保存されます');
+            await s.look('#btn-pe-save', { ms: 1800 });
+        }
+    },
+    {
+        id: '2-14',
+        title: '開発者にサンプルを見せる',
+        run: async (s) => {
+            await s.say('開発者に見せるのは、サンプルの方だけです');
+            await s.tap('#btn-view-color-settings');
+            await s.say('「🧪 サンプル（C-0000）だけ書き出す」を押します');
+            await s.look('#btn-export-sample', { ms: 2200 });
+            await s.say('顧客No. C-0000 の方だけが入り、ほかの方は入りません');
+            await s.say('受け取った側は「📥 読み込む」で取り込みます');
         }
     }
 ];
