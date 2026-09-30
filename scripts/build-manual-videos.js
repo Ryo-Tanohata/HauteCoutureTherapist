@@ -489,7 +489,7 @@ const SCENES = [
             await s.say('名前・顧客No.・アレルギーなどを直します');
             await s.tap('#btn-view-list');
             await s.tap('.customer-card-grid-item', { nth: 0 });
-            await s.say('名前を押すと「この方のこと」が開きます');
+            await s.say('名前を押すと、お客様の情報が開きます');
             await s.tap('#detail-name-open');
             await s.say('開いた直後は、読むだけです');
             await s.say('「✏️ 編集する」を押すと、全部の欄が入力できます');

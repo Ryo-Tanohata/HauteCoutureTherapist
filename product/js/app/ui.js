@@ -3190,7 +3190,7 @@ function initApp() {
                 // 施術中に画面を送っていて生年月日を書き換える、が起こりえた。
                 tabContentArea.innerHTML = `
                     <div class="personal-info-bar">
-                        <span class="personal-info-title">👤 この方のこと${helpButtonHtml('2-13', '情報の直し方')}</span>
+                        <span class="personal-info-title"><span class="personal-info-icon" title="お客様の情報">👤</span>${helpButtonHtml('2-13', '情報の直し方')}</span>
                         <button type="button" id="btn-personal-edit" class="personal-info-edit"
                                 aria-pressed="${personalEditOn ? 'true' : 'false'}">
                             ${personalEditOn ? '✅ 編集をやめる' : '✏️ 編集する'}
@@ -4018,7 +4018,7 @@ function initApp() {
 
         tabContentArea.innerHTML = `
             <div class="personal-info-bar">
-                <span class="personal-info-title">👤 この方のこと（編集中）${helpButtonHtml('2-13', '情報の直し方')}</span>
+                <span class="personal-info-title"><span class="personal-info-icon" title="お客様の情報（編集中）">👤</span>${helpButtonHtml('2-13', '情報の直し方')}</span>
                 <button type="button" id="btn-pe-save-top" class="personal-info-edit pe-save">💾 保存する</button>
             </div>
             <form id="personal-edit-form" class="pe-form" autocomplete="off" onsubmit="return false;">
