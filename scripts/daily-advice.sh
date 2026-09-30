@@ -10,7 +10,7 @@
 set -uo pipefail
 
 BRANCH="${ADVICE_BRANCH:-main}"
-REMOTE="${ADVICE_REMOTE:-gitlab}"
+REMOTE="${ADVICE_REMOTE:-origin}"
 MODEL="${CLAUDE_MODEL:-claude-sonnet-5}"
 DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1

@@ -11,11 +11,20 @@
  *   node scripts/refresh-advice.js --ingress  星座の変わり目の表だけ再生成
  *   node scripts/refresh-advice.js today 1week  指定した期間だけ更新
  *
+ * 定期タスクの Claude が「ウェブで調べて書く」ときの道（AIを呼ばない）:
+ *   node scripts/refresh-advice.js --brief [期間…]   更新が要る期間の材料と指示を JSON で出す
+ *   node scripts/refresh-advice.js --apply <期間> <本文.md> [参考ページ.json]
+ *                                                  書いた本文を保存する（見出し【0】〜【4】が要る）
+ *
  * 期間ごとの更新サイクル:
  *   today 毎日 / 1week 毎週 / 1month 毎月 / 3months 四半期 / 6months 半期 / 1year 毎年
  * 期限が来ていない期間は呼んでもスキップされるので、毎日実行して問題ない。
  */
-const { PERIODS, STORE_DIR, refreshPeriod, backfillPlanetaryData, isStale, listStored } = require('../server/advice');
+// 日付と更新サイクルは日本時間で数える。クラウド（UTC）で動かしても日付がずれないように
+if (!process.env.TZ) process.env.TZ = 'Asia/Tokyo';
+const fs = require('fs');
+const { PERIODS, STORE_DIR, refreshPeriod, backfillPlanetaryData, isStale, listStored,
+    buildResearchBrief, applyWrittenAdvice } = require('../server/advice');
 const { writeIngressTable } = require('../server/ingress');
 
 const args = process.argv.slice(2);
@@ -41,6 +50,25 @@ function showStatus() {
 }
 
 async function main() {
+    if (args[0] === '--brief') {
+        const want = args.slice(1).filter((a) => PERIODS.includes(a));
+        const list = (want.length ? want : PERIODS).filter((p) => want.length || isStale(p));
+        process.stdout.write(JSON.stringify(list.map((p) => buildResearchBrief(p)), null, 2) + '\n');
+        return;
+    }
+    if (args[0] === '--apply') {
+        const [, period, textFile, sourcesFile] = args;
+        if (!PERIODS.includes(period) || !textFile) {
+            throw new Error('使い方: --apply <期間> <本文.md> [参考ページ.json]');
+        }
+        const text = fs.readFileSync(textFile, 'utf8');
+        const sources = sourcesFile ? JSON.parse(fs.readFileSync(sourcesFile, 'utf8')) : [];
+        const { file, payload } = applyWrittenAdvice(period, text, {
+            sources, model: process.env.CLAUDE_MODEL || 'claude (scheduled task)'
+        });
+        console.log(`[DONE] ${period}: 参考ページ ${payload.sources.length} 件 → ${file}`);
+        return;
+    }
     if (statusOnly) {
         showStatus();
         return;

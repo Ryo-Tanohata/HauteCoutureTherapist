@@ -7295,3 +7295,10 @@ body {
 .dol-camera span[aria-hidden] { font-size: 1.1rem; }
 .dol-view-photos { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 1.6em; margin-top: 4px; }
 .dol-view-photos .photo-thumb { width: 56px; height: 56px; }
+
+/* 星詠み：参考にしたページ */
+.advice-sources { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border-glass); font-size: 0.78rem; color: var(--text-secondary); }
+.advice-sources-head { font-weight: 600; margin-bottom: 6px; }
+.advice-sources ul { margin: 0; padding-left: 18px; }
+.advice-sources li { margin-bottom: 4px; line-height: 1.5; word-break: break-all; }
+.advice-sources a { color: var(--text-secondary); text-decoration: underline; }

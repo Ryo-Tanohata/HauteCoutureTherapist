@@ -9222,7 +9222,17 @@ function initApp() {
                 htmlContent = htmlList.join('');
             }
             
-            contentEl.innerHTML = `<div class="advice-markdown" style="background: rgba(255,255,255,0.02); padding: 24px; border-radius: 16px; border: 1px solid var(--border-glass); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word;">${htmlContent}</div>`;
+            // ウェブで調べて書いた回は、参考にしたページを本文の下に小さく出す。
+            // http(s) だけを通し、文字はすべて逃がす（生成された値をそのまま HTML にしない）
+            const sources = (Array.isArray(data.sources) ? data.sources : [])
+                .filter((x) => x && typeof x.url === 'string' && /^https?:\/\//.test(x.url));
+            const sourcesHtml = sources.length ? `
+                <div class="advice-sources">
+                    <div class="advice-sources-head">🔎 参考にしたページ</div>
+                    <ul>${sources.map((x) => `<li><a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${
+                        escapeHtml(String(x.title || x.url))}</a></li>`).join('')}</ul>
+                </div>` : '';
+            contentEl.innerHTML = `<div class="advice-markdown" style="background: rgba(255,255,255,0.02); padding: 24px; border-radius: 16px; border: 1px solid var(--border-glass); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word;">${htmlContent}${sourcesHtml}</div>`;
 
             // Stats & Timeline rendering
             let statsHtml = `

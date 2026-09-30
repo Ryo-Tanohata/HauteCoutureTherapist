@@ -467,14 +467,22 @@ function listStored(date = new Date()) {
  * @param {string} [options.preferredModel] 画面で選ばれた Claude のモデル
  */
 async function generateAdvicePayload(period, { date = new Date(), customApiKey, preferredProvider, preferredModel } = {}) {
-    const cacheInfo = getCacheInfo(period, date);
     const planetaryData = buildPlanetaryData(period, date);
     const { prompt, systemInstruction } = buildAdvicePrompt(period, planetaryData);
 
     const result = await generateAdvice({
         prompt, systemInstruction, customApiKey, preferredProvider, preferredModel, label: '星詠みメッセージ'
     });
+    return assemblePayload(period, date, planetaryData, result);
+}
 
+/**
+ * 保存する形にまとめる。AIを呼ぶ道（generateAdvicePayload）と、
+ * 定期タスクの Claude が調べて書いた文を受け取る道（applyWrittenAdvice）で共用する。
+ * result: { text, usedModel, usedProvider, fallbackFrom?, sources? }
+ */
+function assemblePayload(period, date, planetaryData, result) {
+    const cacheInfo = getCacheInfo(period, date);
     const pad = (n) => String(n).padStart(2, '0');
     const generatedAt = `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} `
         + `${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -491,6 +499,8 @@ async function generateAdvicePayload(period, { date = new Date(), customApiKey, 
         usedProvider: result.usedProvider,
         // Claudeが使えずGeminiに切り替わった場合、その経緯をUIで示せるようにする
         fallbackFrom: result.fallbackFrom || [],
+        // ウェブで調べて書いたときに参考にしたページ（[{ title, url }]）。無ければ空
+        sources: Array.isArray(result.sources) ? result.sources : [],
         // 次回の更新要否を判定するための世代キー
         cacheKey: cacheInfo.key,
         // このサイクルが終わる時刻。ブラウザはこれを見て「古い」と出す。
@@ -500,6 +510,77 @@ async function generateAdvicePayload(period, { date = new Date(), customApiKey, 
             return next ? next.toISOString() : null;
         })()
     };
+}
+
+// ---------------------------------------------------------------------------
+// 定期タスクの Claude が「調べて書く」ための道（--brief / --apply）
+//
+// 材料（天体の位置など）はこれまでどおり計算で出す。Claude はそれを受け取り、
+// ウェブで裏付け・天気と体調・他の読みの傾向を調べてから、文章を書く。
+// 計算と食い違ったら計算を正とする。他人の文章は写さない。
+// ---------------------------------------------------------------------------
+
+/** 調べ方と、足す見出し「今日の空と体調」の決まり */
+function researchGuide(period) {
+    const spec = ADVICE_PERIOD_SPECS[period] || ADVICE_PERIOD_SPECS.today;
+    return `【ウェブ調査の決まり（書く前に必ず行う）】
+A. 天文の裏付け：国立天文台の暦（eco.mtk.nao.ac.jp の暦要項・今日のほしぞら等）や信頼できる天文サイトで、
+   基準日前後の月相・日食月食・水星など惑星の逆行期間・星座移動（イングレス）を確かめる。
+   ※ 天体データ（JSON）は天文計算で出した正の値。ウェブと食い違ったら JSON を採る。
+C. 天気と体調：気象庁（jma.go.jp）の天気・季節予報や tenki.jp の気圧予報などで、
+   関東（東京）の${spec.label}の気温・寒暖差・気圧の傾向を調べる。
+   体調は「〜しやすい時期」「〜に気を配りたい」までにとどめ、診断や効能の断定はしない。
+D. 占星術家の読み：同じ時期についての複数の占星術家・メディアの読みを読み、傾向だけをつかむ。
+   **文章は写さない。言い回しも借りない。** 自分の言葉で、上の天体データに沿って書く。
+
+【見出しの追加】
+・「### 【0. 今日の空と体調】」を、【1】より前に置く（${spec.label}ぶんの内容。期間が長いときは期間の傾向として書く）。
+・中身は A と C で分かったこと：空の出来事（月の形、逆行、食、星座移動など）と、天気・気圧・寒暖差から見た
+  体のコンディションと施術で気を配りたいこと。3〜5行ほど、箇条書き可。
+・【1】〜【4】は下の指示どおり（見出しの文言は変えない）。
+
+【参考にしたページ】
+・実際に開いて参考にしたページを3〜8件、{ "title": "...", "url": "https://..." } の配列で別ファイルに書く。
+・記事の本文には URL を書かない（参考ページはアプリが本文の下に出す）。`;
+}
+
+/** 定期タスク用：更新が要る期間の材料と指示をまとめて返す */
+function buildResearchBrief(period, date = new Date()) {
+    const planetaryData = buildPlanetaryData(period, date);
+    const { prompt, systemInstruction } = buildAdvicePrompt(period, planetaryData);
+    const cacheInfo = getCacheInfo(period, date);
+    return {
+        period,
+        periodName: cacheInfo.periodName,
+        baseDate: planetaryData.date,
+        researchGuide: researchGuide(period),
+        systemInstruction: systemInstruction.replace(
+            '必ず「### 【1. ...】」から書き始めてください。',
+            '必ず「### 【0. 今日の空と体調】」から書き始めてください。'),
+        prompt,
+        planetaryData
+    };
+}
+
+/**
+ * 定期タスクの Claude が書いた文章を保存する。
+ * 見出し【0】〜【4】がそろっているかだけ確かめ、欠けていれば保存しない
+ * （途中で切れた文を、最新として出さないため）。
+ */
+function applyWrittenAdvice(period, text, { date = new Date(), sources = [], model = 'claude (scheduled task)' } = {}) {
+    const body = String(text || '').trim();
+    const missing = ['【0.', '【1.', '【2.', '【3.', '【4.'].filter((h) => !body.includes(h));
+    if (missing.length) throw new Error(`見出しが足りません: ${missing.join(' ')}`);
+    const clean = (Array.isArray(sources) ? sources : [])
+        .filter((x) => x && typeof x.url === 'string' && /^https?:\/\//.test(x.url))
+        .slice(0, 12)
+        .map((x) => ({ title: String(x.title || x.url).slice(0, 160), url: x.url }));
+    const planetaryData = buildPlanetaryData(period, date);
+    const payload = assemblePayload(period, date, planetaryData, {
+        text: body, usedProvider: 'claude（定期タスク・ウェブ調査つき）', usedModel: model, sources: clean
+    });
+    const file = writeStored(period, payload);
+    return { payload, file };
 }
 
 /** 生成してファイルに保存する */
@@ -553,6 +634,8 @@ module.exports = {
     buildAdvicePrompt,
     generateAdvicePayload,
     refreshPeriod,
+    buildResearchBrief,
+    applyWrittenAdvice,
     readStored,
     writeStored,
     isStale,

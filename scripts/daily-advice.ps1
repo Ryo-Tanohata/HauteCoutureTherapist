@@ -21,7 +21,7 @@ param(
     # 送り先の枝。ここに送ったものが配られる。
     [string]$Branch = 'main',
     # 送り先の名前。この環境では GitLab を使っている。
-    [string]$Remote = 'gitlab',
+    [string]$Remote = 'origin',
     # 星詠みを作るモデル。軽いモデルは長い読み物に向かない（ISSUE-055）
     [string]$Model = 'claude-sonnet-5',
     # 作りも送りもせず、何をするかだけ出す
