@@ -2595,7 +2595,11 @@ function initApp() {
     }
 
     /** Soul Colorのインライン編集を開始する */
-    function startSoulColorInlineEdit(container, customer) {
+    /**
+     * @param onPick  渡されたときは保存しない。選んだ色を渡すだけにする。
+     *                「この方のこと」をまとめて保存する画面で使う。
+     */
+    function startSoulColorInlineEdit(container, customer, onPick = null) {
         if (currentActiveEditor) {
             if (!confirm('現在編集中の項目があります。別の項目を編集しますか？')) return;
             closeActiveEditor();
@@ -2793,9 +2797,13 @@ function initApp() {
         btnSave.style.cssText = 'background: var(--accent-cyan); border: none; color: #000; font-size: 1rem; width: 64px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800;';
         btnSave.onclick = (e) => {
             e.stopPropagation();
-            updateCustomer(customer.id, {
-                soulColors: currentColors.filter(c => c !== 'clear').length > 0 ? currentColors : []
-            });
+            const picked = currentColors.filter(c => c !== 'clear').length > 0 ? currentColors : [];
+            if (onPick) {
+                closeEdit();
+                onPick(picked);
+                return;
+            }
+            updateCustomer(customer.id, { soulColors: picked });
             showToast('更新しました', 'success');
             showCustomerDetail(customer.id);
         };
@@ -3130,6 +3138,13 @@ function initApp() {
                 break;
 
             case 'personal-info':
+                // 編集は、全部の欄をまとめて直して、最後に1回「保存する」形。
+                // 以前は欄ごとに ✅ で保存する欄と、触った瞬間に保存される欄
+                // （体質・アレルギー）が混ざっていて、保存できたか分からなかった。
+                if (personalEditOn) {
+                    renderPersonalEditForm(customer);
+                    break;
+                }
                 // この方のこと。名前を押すと開く（ISSUE-077）。
                 //
                 // **押すまでは読むだけ。** 以前は欄に触れた瞬間に編集が始まっていて、
@@ -3196,19 +3211,25 @@ function initApp() {
                 `;
 
                 renderConstitutionEditor(customer);
+                // 見ているだけのときは、体質・アレルギーも触れないようにする。
+                // 施術中に画面を送っていて、チェックが外れる、を起こさないため。
+                {
+                    const conHost = document.getElementById('constitution-editor');
+                    if (conHost) {
+                        conHost.querySelectorAll('input, button, textarea, select').forEach((el) => { el.disabled = true; });
+                        conHost.classList.add('is-readonly');
+                    }
+                }
 
                 const personalEditBtn = document.getElementById('btn-personal-edit');
                 if (personalEditBtn) {
                     personalEditBtn.onclick = () => {
-                        personalEditOn = !personalEditOn;
+                        personalEditOn = true;
                         renderTabContent(customer);
-                        showToast(personalEditOn
-                            ? '編集できます。直したい欄を押してください'
-                            : '編集をやめました', 'info');
                     };
                 }
 
-                // インライン編集の開始。**押していない間は、どの欄も動かさない**
+                // 見ているだけのときは、どの欄も動かさない。直すのは「編集する」から
                 tabContentArea.querySelectorAll('.quick-edit-field').forEach(el => {
                     if (!personalEditOn) { el.style.cursor = 'default'; el.title = ''; return; }
                     el.onclick = (e) => {
@@ -3928,6 +3949,212 @@ function initApp() {
                     上の体質とアレルギーから決まります。AIの提案にも、使える精油だけが渡ります。
                 </div>
             </div>`;
+    }
+
+    /**
+     * 「この方のこと」をまとめて直す画面。
+     *
+     * 書き込むのは「保存する」を押したときの1回だけ。それまでは画面の中だけで
+     * 持っておく（体質・アレルギーも、Soul Color も）。保存に失敗したら、
+     * 画面を閉じずにそのまま残し、失敗したことをはっきり出す。
+     */
+    function renderPersonalEditForm(customer) {
+        const intake = customer.intake || {};
+        let conDraft = customer.constitution || null;
+        let colorDraft = [...getSoulColors(customer)];
+
+        const text = (id, label, value, opts = {}) => `
+            <div class="form-group pe-field${opts.wide ? ' pe-wide' : ''}">
+                <label for="${id}">${escapeHtml(label)}</label>
+                <input id="${id}" class="form-control" type="${opts.type || 'text'}"
+                       value="${escapeHtml(value == null ? '' : String(value))}"
+                       ${opts.attrs || ''}>
+                ${opts.after || ''}
+            </div>`;
+        const area = (id, label, value) => `
+            <div class="form-group pe-field pe-wide">
+                <label for="${id}">${escapeHtml(label)}</label>
+                <textarea id="${id}" class="form-control" rows="3">${escapeHtml(value == null ? '' : String(value))}</textarea>
+            </div>`;
+
+        tabContentArea.innerHTML = `
+            <div class="personal-info-bar">
+                <span class="personal-info-title">👤 この方のこと（編集中）</span>
+                <button type="button" id="btn-pe-save-top" class="personal-info-edit pe-save">💾 保存する</button>
+            </div>
+            <form id="personal-edit-form" class="pe-form" autocomplete="off" onsubmit="return false;">
+                <div class="pe-grid">
+                    ${text('pe-name', '氏名（必須）', customer.name)}
+                    ${text('pe-nickname', 'ニックネーム（任意）', customer.nickname)}
+                    ${text('pe-kana', 'カナ', customer.kana)}
+                    ${text('pe-customer-no', '顧客No.（同じ番号は使えません）', customer.customerNo, {
+                        attrs: 'autocapitalize="characters" spellcheck="false"',
+                        after: '<small id="pe-customer-no-hint" class="pe-hint" aria-live="polite"></small>'
+                    })}
+                    ${text('pe-phone', '電話番号', customer.phone, { type: 'tel' })}
+                    ${text('pe-birthday', '生年月日', customer.birthday, { type: 'date' })}
+                    ${text('pe-referrer', '紹介者', customer.referrer)}
+                </div>
+                <div class="pe-field pe-wide">
+                    <span class="pe-label">Soul Color</span>
+                    <div class="quick-edit-field pe-colors" id="pe-colors" title="押すと色を選べます">
+                        <div class="field-value" id="pe-colors-view"></div>
+                    </div>
+                </div>
+                <div id="constitution-editor"></div>
+                <h4 class="intake-head">初診</h4>
+                ${area('pe-intake-personal', '❤️ Personal', intake.personal)}
+                ${area('pe-intake-reasonGoal', '❤️ Reason & Gole', intake.reasonGoal)}
+                ${area('pe-intake-family', '❤️ 家族構成', intake.family)}
+                ${area('pe-intake-history', '❤️ 病歴', intake.history)}
+                ${area('pe-intake-medication', '❤️ 薬', intake.medication)}
+                ${area('pe-initial', '❤️ memo', customer.initialConsultation)}
+                ${area('pe-memo', '特記事項・メモ', customer.memo)}
+            </form>
+            <div class="pe-save-bar">
+                <button type="button" id="btn-pe-cancel" class="pe-cancel">やめる</button>
+                <button type="button" id="btn-pe-save" class="btn-primary pe-save-main">💾 保存する</button>
+            </div>
+        `;
+
+        const $ = (id) => document.getElementById(id);
+        let dirty = false;
+        const form = $('personal-edit-form');
+        if (form) {
+            form.addEventListener('input', () => { dirty = true; });
+            form.addEventListener('change', () => { dirty = true; });
+        }
+
+        // Soul Color：選んでも保存はしない。「保存する」でまとめて書く
+        const paintColors = () => {
+            const view = $('pe-colors-view');
+            if (view) view.innerHTML = colorDraft.filter((c) => c && c !== 'clear').length
+                ? buildSoulColorBadgeHtml(colorDraft, 'sm') + '<span class="pe-colors-tip">押すと選び直せます</span>'
+                : '<span class="pe-colors-tip">未設定（押して選ぶ）</span>';
+        };
+        paintColors();
+        const colorsBox = $('pe-colors');
+        if (colorsBox) {
+            colorsBox.onclick = () => {
+                if (colorsBox.querySelector('.inline-color-editor')) return;
+                startSoulColorInlineEdit(colorsBox, { ...customer, soulColors: colorDraft }, (picked) => {
+                    colorDraft = picked;
+                    dirty = true;
+                    paintColors();
+                });
+            };
+        }
+
+        // 体質・アレルギー：チェックしても保存はしない。下書きに持つ
+        const conHost = $('constitution-editor');
+        const mountCon = () => {
+            if (!conHost) return;
+            mountConstitutionEditor(conHost, conDraft, (next) => {
+                conDraft = next;
+                dirty = true;
+                mountCon();
+            });
+        };
+        mountCon();
+
+        // 顧客No.：打っている間に重なりを知らせる
+        const noEl = $('pe-customer-no');
+        const noHint = $('pe-customer-no-hint');
+        const checkNo = () => {
+            const v = normalizeCustomerNo(noEl ? noEl.value : '');
+            let problem = null;
+            if (!v) problem = '顧客No. を空にはできません。';
+            else {
+                const owner = findCustomerNoOwner(v, customer.id);
+                if (owner) problem = `${v} はすでに ${owner.name || '別の方'} 様${owner.isArchived ? '（保管中）' : ''}が使っています。`;
+            }
+            if (noHint) noHint.textContent = problem ? `⚠ ${problem}` : '';
+            if (noEl) noEl.classList.toggle('is-invalid', Boolean(problem));
+            return problem;
+        };
+        if (noEl) noEl.addEventListener('input', checkNo);
+
+        const val = (id) => { const el = $(id); return el ? el.value : ''; };
+
+        const save = () => {
+            const name = val('pe-name').trim();
+            if (!name) {
+                showToast('氏名は必須です。', 'error');
+                const el = $('pe-name'); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); }
+                return;
+            }
+            const noProblem = checkNo();
+            if (noProblem) {
+                showToast(noProblem, 'error');
+                if (noEl) { noEl.focus(); noEl.scrollIntoView({ block: 'center' }); }
+                return;
+            }
+            // 体質・アレルギーの「その他」に打ちかけて、追加を押し忘れたものも拾う
+            if (conHost) {
+                const pending = [];
+                conHost.querySelectorAll('[data-free-block]').forEach((block) => {
+                    const inp = block.querySelector('.free-input');
+                    if (inp && inp.value.trim()) pending.push([block.dataset.freeBlock, inp.value.trim()]);
+                });
+                if (pending.length) {
+                    const cur = getConstitution({ constitution: conDraft });
+                    const next = {
+                        flags: { ...cur.flags }, allergies: [...cur.allergies], maxDilution: cur.maxDilution,
+                        otherAllergies: [...cur.otherAllergies], otherFlags: [...cur.otherFlags]
+                    };
+                    pending.forEach(([kind, t]) => {
+                        const k = kind === 'flag' ? 'otherFlags' : 'otherAllergies';
+                        if (!next[k].includes(t)) next[k].push(t);
+                    });
+                    conDraft = next;
+                }
+            }
+
+            const birthday = val('pe-birthday');
+            const update = {
+                name,
+                nickname: val('pe-nickname').trim(),
+                kana: val('pe-kana'),
+                customerNo: normalizeCustomerNo(val('pe-customer-no')),
+                phone: val('pe-phone'),
+                birthday,
+                referrer: val('pe-referrer'),
+                soulColors: colorDraft,
+                initialConsultation: val('pe-initial'),
+                memo: val('pe-memo'),
+                intake: {
+                    ...intake,
+                    personal: val('pe-intake-personal'),
+                    reasonGoal: val('pe-intake-reasonGoal'),
+                    family: val('pe-intake-family'),
+                    history: val('pe-intake-history'),
+                    medication: val('pe-intake-medication')
+                }
+            };
+            if (birthday) update.birthMonth = birthday.split('-')[1];
+            if (conDraft) update.constitution = conDraft;
+
+            const saved = updateCustomer(customer.id, update);
+            const err = getLastSaveError();
+            if (!saved || err) {
+                // 保存できていない。画面は閉じずに残す（打ったものを失わないため）
+                showToast(`⚠ 保存できませんでした。${err ? err.message : ''}`, 'error');
+                return;
+            }
+            personalEditOn = false;
+            showToast(`${name} 様の情報を保存しました`, 'success');
+            showCustomerDetail(customer.id);
+        };
+
+        const cancel = () => {
+            if (dirty && !confirm('保存していない変更があります。保存せずにやめますか？')) return;
+            personalEditOn = false;
+            closeActiveEditor();
+            renderTabContent(getCustomers().find((c) => c.id === customer.id) || customer);
+        };
+
+        ['btn-pe-save', 'btn-pe-save-top'].forEach((id) => { const b = $(id); if (b) b.onclick = save; });
+        const c = $('btn-pe-cancel'); if (c) c.onclick = cancel;
     }
 
     /** カルテ側。保存済みの顧客に直接書く */

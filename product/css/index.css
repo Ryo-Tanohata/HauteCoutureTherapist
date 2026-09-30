@@ -7062,3 +7062,70 @@ body {
 }
 
 #customer-no-hint:empty { display: none; }
+
+/* ==================================================================
+   「この方のこと」をまとめて直す画面
+   ================================================================== */
+.pe-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 0 8px;
+}
+.pe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px 14px;
+}
+.pe-field label,
+.pe-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.pe-hint:empty { display: none; }
+.pe-hint { font-size: 0.75rem; color: #ff8a8a; }
+.pe-form .form-control.is-invalid { border-color: #ff8a8a; }
+.pe-form textarea.form-control { min-height: 72px; line-height: 1.6; }
+.pe-colors {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.03);
+    margin-top: 6px;
+}
+.pe-colors .field-value { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pe-colors-tip { font-size: 0.75rem; color: var(--text-secondary); }
+.personal-info-edit.pe-save {
+    background: rgba(0, 242, 254, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+/* 下に貼りつく保存の帯。どこまで送っても押せるように */
+.pe-save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    gap: 10px;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    margin-top: 8px;
+    background: linear-gradient(to top, var(--bg-base) 70%, transparent);
+}
+.pe-save-bar .pe-cancel {
+    flex: 1;
+    font: inherit;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.pe-save-bar .pe-save-main { flex: 2; }
+
+/* 見ているだけのときの体質・アレルギー（触れない） */
+#constitution-editor.is-readonly input,
+#constitution-editor.is-readonly button { cursor: default; }
+#constitution-editor.is-readonly .constitution-free-add { display: none; }
