@@ -878,19 +878,53 @@ function buildCustomerColorIndicatorHtml(customer) {
  *
  * 中身が何も無くてもカードの中は空にならない。編集ボタンが必ず入るため。
  */
+/**
+ * 🐬 施術とメモ。施術ごとに、今回の金額とメモを対にして出す。
+ * 金額は「今回だけ」の金額があればそれ、無ければ定価。
+ */
+function buildDolphinDetailsHtml(r) {
+    const items = recordMenuItems(r);
+    if (items.length === 0) return '';
+    const amounts = (r.menuAmounts && typeof r.menuAmounts === 'object') ? r.menuAmounts : {};
+    const notes = (r.menuNotes && typeof r.menuNotes === 'object') ? r.menuNotes : {};
+    const amountText = (m) => {
+        if (m.amount === 'none') return '';
+        const over = amounts[m.key];
+        if (over !== undefined && over !== null && String(over).trim() !== '') return `${Number(over).toLocaleString()}円`;
+        if (m.amount === null || m.amount === undefined) return '金額未入力';
+        return `${Number(m.amount).toLocaleString()}円`;
+    };
+    return `
+        <div class="dol-view">
+            <div class="dol-view-head">🐬 施術とメモ</div>
+            ${items.map((m) => `
+                <div class="dol-view-item">
+                    <div class="dol-view-line">
+                        <span aria-hidden="true">${m.icon}</span>
+                        <span class="dol-view-name">${escapeHtml(m.name)}</span>
+                        <span class="dol-view-amount">${escapeHtml(amountText(m))}</span>
+                    </div>
+                    ${notes[m.key] && String(notes[m.key]).trim()
+                        ? `<div class="dol-view-memo">${escapeHtml(String(notes[m.key]))}</div>` : ''}
+                </div>`).join('')}
+        </div>`;
+}
+
 function buildRecordDetailsHtml(r) {
+    const items = recordMenuItems(r);
     const rows = [
         { label: '選んだ色', html: buildRecordColorsHtml(r) },
         { label: '訴え', value: r.clientComplaint, color: 'var(--accent-warning)' },
         { label: '処方', value: r.prescription, color: 'var(--accent-cyan)' },
-        { label: 'メモ', value: r.therapistNote, color: 'var(--accent-purple)' },
+        { label: items.length ? '全体の気付き' : 'メモ', value: r.therapistNote, color: 'var(--accent-purple)' },
     ];
     const kartes = buildKarteDetailsHtml(r);
+    const dolphin = buildDolphinDetailsHtml(r);
 
     // 要約で「ほか N」に畳んだぶんを、開いたときにここで出す（ISSUE-089）。
-    // **畳んでいないときは出さない。** 上の札と同じものが二度並ぶため
-    const items = recordMenuItems(r);
-    const full = items.length > SUMMARY_MENU_LIMIT
+    // **畳んでいないときは出さない。** 上の札と同じものが二度並ぶため。
+    // 🐬の欄に施術が並ぶときは、そちらで足りる
+    const full = !dolphin && items.length > SUMMARY_MENU_LIMIT
         ? `<div style="font-size: 0.85rem; margin-top: 4px;">
                <span style="color: var(--accent-cyan); font-weight: 500;">施術内容:</span>
                ${items.map((m) => `${m.icon} ${escapeHtml(m.name)}`).join('　')}
@@ -909,7 +943,7 @@ function buildRecordDetailsHtml(r) {
                 <span style="color: ${color || 'var(--accent-success)'}; font-weight: 500;">${label}:</span>
                 ${body}
             </div>`;
-    }).filter(Boolean).join('') + kartes;
+    }).filter(Boolean).join('') + dolphin + kartes;
 }
 
 /**
@@ -4753,6 +4787,7 @@ function initApp() {
             categories: [...recordCategories],
             menu: recordMenu.keys,
             menuAmounts: recordMenu.adhoc,
+            menuNotes: currentMenuNotes(),
             photos: [...recordPhotos],
             kartes: { ...recordKartes }
         };
@@ -5339,6 +5374,9 @@ function initApp() {
         recordMenu.set([], {}, '');
         const menuFold = document.getElementById('record-menu-fold');
         if (menuFold) menuFold.open = false;   // ふだんは畳んでおく
+        setRecordMenuNotes({});
+        dolphinPickerOpen = false;
+        renderDolphin();
         setRecordPhotos([]);
         setRecordKartes({});
         renderRecordKartes();
@@ -5541,6 +5579,33 @@ function initApp() {
                 return String(total);
             },
             label: () => menuLabel(st.keys),
+            /** 合計の表示（押す前は、入っていた金額） */
+            totalLabel: () => amountLabel(),
+            /** 🐬の中から施術を足す・外す・今回の金額を変える */
+            add(key) {
+                if (!st.keys.includes(key)) st.keys = [...st.keys, key];
+                st.touched = true;
+                paint();
+                if (onChange) onChange(st);
+            },
+            remove(key) {
+                st.keys = st.keys.filter((k) => k !== key);
+                delete st.adhoc[key];
+                st.touched = true;
+                paint();
+                if (onChange) onChange(st);
+            },
+            setAmount(key, value) {
+                const m = getServiceMenu().find((x) => x.key === key);
+                const fixed = m && m.amount !== null && m.amount !== undefined && m.amount !== 'none';
+                const v = String(value == null ? '' : value).trim();
+                // 定価と同じ・空なら「今回だけ」を持たない（定価に従う）
+                if (v === '' || (fixed && Number(v) === Number(m.amount))) delete st.adhoc[key];
+                else st.adhoc[key] = v;
+                st.touched = true;
+                paintSummary();
+                if (onChange) onChange(st);
+            },
             set(keys, adhoc, storedAmount) {
                 const valid = getServiceMenu().map((m) => m.key);
                 st.keys = (Array.isArray(keys) ? keys : []).filter((k) => valid.includes(k));
@@ -5578,6 +5643,7 @@ function initApp() {
         const a = document.getElementById('input-amount');
         if (t) t.value = recordMenu.label();
         if (a) a.value = recordMenu.amount();
+        paintDolphinTotal();
         renderRecordKartes();
         scheduleAutosave();
     });
@@ -5602,6 +5668,138 @@ function initApp() {
         recordCategories = (Array.isArray(keys) ? keys : []).filter((k) => valid.includes(k));
     }
 
+    // ------------------------------------------------------------------
+    // 🐬 施術とメモ
+    //
+    // 施術は上の札で選ぶのではなく、🐬の中で「＋ 施術を追加」から足す。
+    // 足した施術ごとに、今回の金額とメモを書く。合計はその下に出る。
+    // 選んだ施術の書く欄（色・写真など）は、これまでどおり下に開く。
+    // ------------------------------------------------------------------
+    let recordMenuNotes = {};       // { menuKey: 'メモ' }
+    let dolphinPickerOpen = false;
+
+    function setRecordMenuNotes(obj) {
+        recordMenuNotes = (obj && typeof obj === 'object') ? { ...obj } : {};
+    }
+    /** 選んでいる施術のぶんだけ、メモを持つ（外したもののメモは持ち越さない） */
+    function currentMenuNotes() {
+        const out = {};
+        recordMenu.keys.forEach((k) => {
+            const v = recordMenuNotes[k];
+            if (v != null && String(v).trim() !== '') out[k] = v;
+        });
+        return out;
+    }
+
+    function renderDolphin() {
+        const host = document.getElementById('record-dolphin');
+        if (!host) return;
+        const menu = getServiceMenu();
+        const adhoc = recordMenu.adhoc;
+        const chosen = recordMenu.keys.map((k) => menu.find((m) => m.key === k)).filter(Boolean);
+
+        const priceNote = (m) => {
+            if (m.amount === 'none') return '金額なし';
+            if (m.amount === null || m.amount === undefined) return '金額はその都度入れる';
+            const over = adhoc[m.key];
+            return (over !== undefined && Number(over) !== Number(m.amount))
+                ? `定価 ${Number(m.amount).toLocaleString()}円から変更（今回だけ）`
+                : `定価 ${Number(m.amount).toLocaleString()}円`;
+        };
+        const amountValue = (m) => {
+            const over = adhoc[m.key];
+            if (over !== undefined) return String(over);
+            return (m.amount === null || m.amount === undefined) ? '' : String(m.amount);
+        };
+
+        host.innerHTML = `
+            ${chosen.map((m) => `
+                <div class="dol-item" data-dol-key="${escapeHtml(m.key)}">
+                    <div class="dol-item-head">
+                        <span class="dol-icon" aria-hidden="true">${m.icon}</span>
+                        <span class="dol-name">${escapeHtml(m.name)}</span>
+                        ${m.amount === 'none' ? '<span class="dol-noamount">—</span>' : `
+                        <label class="dol-amount">
+                            <input type="number" inputmode="numeric" min="0" step="100"
+                                   data-dol-amount="${escapeHtml(m.key)}"
+                                   placeholder="${(m.amount === null || m.amount === undefined) ? '0' : escapeHtml(String(m.amount))}"
+                                   value="${escapeHtml(amountValue(m))}" aria-label="${escapeHtml(m.name)} の金額">円
+                        </label>`}
+                        <button type="button" class="dol-remove" data-dol-remove="${escapeHtml(m.key)}"
+                                aria-label="${escapeHtml(m.name)} を外す">×</button>
+                    </div>
+                    <div class="dol-price-note${adhoc[m.key] !== undefined && m.amount !== null && m.amount !== undefined && m.amount !== 'none' ? ' is-changed' : ''}"
+                         data-dol-note-for="${escapeHtml(m.key)}">${escapeHtml(priceNote(m))}</div>
+                    <textarea class="form-control dol-memo" rows="2" data-dol-memo="${escapeHtml(m.key)}"
+                              placeholder="${escapeHtml(m.name)} のメモ" aria-label="${escapeHtml(m.name)} のメモ">${escapeHtml(recordMenuNotes[m.key] || '')}</textarea>
+                </div>`).join('')}
+            ${dolphinPickerOpen ? `
+                <div class="dol-picker">
+                    <span class="dol-picker-hint">足す施術を押してください</span>
+                    <div class="dol-picker-chips">
+                        ${menu.filter((m) => !recordMenu.keys.includes(m.key)).map((m) => `
+                            <button type="button" class="dol-chip" data-dol-add="${escapeHtml(m.key)}">
+                                <span aria-hidden="true">${m.icon}</span>${escapeHtml(m.name)}
+                                <span class="dol-chip-price">${escapeHtml(priceLabel(m.amount))}</span>
+                            </button>`).join('')}
+                    </div>
+                </div>` : ''}
+            <button type="button" class="dol-add-btn" id="btn-dol-toggle">${dolphinPickerOpen ? '閉じる' : '＋ 施術を追加'}</button>
+        `;
+        paintDolphinTotal();
+
+        host.querySelector('#btn-dol-toggle').onclick = () => {
+            dolphinPickerOpen = !dolphinPickerOpen;
+            renderDolphin();
+        };
+        host.querySelectorAll('[data-dol-add]').forEach((b) => {
+            b.onclick = () => {
+                const key = b.dataset.dolAdd;
+                dolphinPickerOpen = false;
+                recordMenu.add(key);          // 書く欄・合計・自動保存は onChange が出し直す
+                renderDolphin();
+                const memo = host.querySelector(`[data-dol-memo="${CSS.escape(key)}"]`);
+                if (memo) memo.focus();
+            };
+        });
+        host.querySelectorAll('[data-dol-remove]').forEach((b) => {
+            b.onclick = () => {
+                const key = b.dataset.dolRemove;
+                const memo = recordMenuNotes[key];
+                if (memo && String(memo).trim() && !confirm('この施術のメモも消えます。外しますか？')) return;
+                delete recordMenuNotes[key];
+                recordMenu.remove(key);
+                renderDolphin();
+            };
+        });
+        host.querySelectorAll('[data-dol-amount]').forEach((inp) => {
+            inp.addEventListener('input', () => {
+                const key = inp.dataset.dolAmount;
+                recordMenu.setAmount(key, inp.value);
+                // 打っている欄は描き直さない（指が止まる）。注記と合計だけ直す
+                const m = getServiceMenu().find((x) => x.key === key);
+                const note = host.querySelector(`[data-dol-note-for="${CSS.escape(key)}"]`);
+                if (m && note) {
+                    note.textContent = priceNote(m);
+                    note.classList.toggle('is-changed', recordMenu.adhoc[key] !== undefined
+                        && m.amount !== null && m.amount !== undefined && m.amount !== 'none');
+                }
+                paintDolphinTotal();
+            });
+        });
+        host.querySelectorAll('[data-dol-memo]').forEach((ta) => {
+            ta.addEventListener('input', () => { recordMenuNotes[ta.dataset.dolMemo] = ta.value; });
+        });
+    }
+
+    function paintDolphinTotal() {
+        const el = document.getElementById('record-dolphin-total');
+        if (!el) return;
+        const label = recordMenu.totalLabel();
+        el.textContent = label === '未定' ? '未定' : label;
+        el.classList.toggle('empty', label === '未定');
+    }
+
     /**
      * 記録から、押されている施術内容を戻す。
      *
@@ -5616,6 +5814,9 @@ function initApp() {
         recordMenu.set(keys, record.menuAmounts || {}, record.amount);
         const fold = document.getElementById('record-menu-fold');
         if (fold) fold.open = false;   // 開き直しても畳んだまま
+        setRecordMenuNotes(record.menuNotes);
+        dolphinPickerOpen = false;
+        renderDolphin();
     }
 
     // ------------------------------------------------------------------
@@ -5667,7 +5868,7 @@ function initApp() {
 
         if (chosen.length === 0 && strays.length === 0) {
             host.innerHTML = `<div class="karte-empty">
-                上の「施術の区分」を選ぶと、その区分のカルテがここに開きます。</div>`;
+                🐬で施術を追加すると、その施術のカルテ（色・写真など）がここに開きます。</div>`;
             return;   // 色の欄は控えの場所に置いたまま（そこは隠してある）
         }
 
@@ -5979,6 +6180,7 @@ function initApp() {
                 const drop = getServiceMenu().filter((m) => m.field === gone).map((m) => m.key);
                 recordMenu.set(recordMenu.keys.filter((k) => !drop.includes(k)),
                     recordMenu.adhoc, document.getElementById('input-amount').value);
+                renderDolphin();
                 recordCategories = recordCategories.filter((k) => k !== gone);
                 renderRecordKartes();
                 scheduleAutosave();
@@ -6467,6 +6669,7 @@ function initApp() {
                     categories: [...recordCategories],
                     menu: recordMenu.keys,
                     menuAmounts: recordMenu.adhoc,
+                    menuNotes: currentMenuNotes(),
                     photos: [...recordPhotos],
                     kartes: { ...recordKartes },
                     // セラピストが目を通して更新した時点で、自動で入った状態ではなくなる
@@ -6526,6 +6729,7 @@ function initApp() {
                 { colors: [...recordColors], advanceSet: getRecordAdvanceSet(),
                   categories: [...recordCategories], photos: [...recordPhotos],
                   menu: recordMenu.keys, menuAmounts: recordMenu.adhoc,
+                  menuNotes: currentMenuNotes(),
                   kartes: { ...recordKartes } });
             
             // [ISSUE-NEW] 下書きを消去

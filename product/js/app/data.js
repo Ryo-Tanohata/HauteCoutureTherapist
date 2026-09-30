@@ -972,6 +972,9 @@ export function addRecord(customerId, date, type, amount, time = '', clientCompl
         menu: Array.isArray(extras.menu) ? extras.menu : [],
         menuAmounts: (extras.menuAmounts && typeof extras.menuAmounts === 'object')
             ? extras.menuAmounts : {},
+        // 施術ごとのメモ（🐬の中に施術と一緒に書く）。{ menuKey: 'メモ' }
+        menuNotes: (extras.menuNotes && typeof extras.menuNotes === 'object')
+            ? extras.menuNotes : {},
         // 写真そのものは IndexedDB にある。ここには控えだけを持つ。
         photos: Array.isArray(extras.photos) ? extras.photos : [],
         // 区分ごとのカルテ。{ color: { note }, aroma: { note }, ... }
@@ -1004,7 +1007,9 @@ export const RECORD_FIELDS = [
     'colors', 'advanceSet', 'categories', 'photos', 'kartes', 'prepAdvice',
     // 押した施術内容と、その都度の金額（ISSUE-085）。
     // ここを入れ忘れると、片方の端末で選び直しても、もう片方に渡らない
-    'menu', 'menuAmounts'
+    'menu', 'menuAmounts',
+    // 施術ごとのメモ。入れ忘れると、別の端末で書いたメモが渡らない
+    'menuNotes'
 ];
 
 /**

@@ -7157,3 +7157,118 @@ body {
     color: var(--text-secondary);
     margin: 6px 0 0;
 }
+
+/* ==================================================================
+   🐬 施術とメモ（記録の画面）
+   ================================================================== */
+#record-menu-group[hidden] { display: none !important; }
+.dolphin-group {
+    background: rgba(0, 242, 254, 0.04);
+    border: 1px solid rgba(0, 242, 254, 0.28);
+    border-radius: 18px;
+    padding: 14px 12px;
+    gap: 10px;
+}
+.dolphin-head { display: flex; align-items: center; gap: 8px; }
+.dolphin-head .mark-label { font-size: 1.15rem; }
+.dolphin-title { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); flex: 1; }
+.dolphin-sub { font-size: 0.72rem; color: var(--text-secondary); }
+.record-dolphin { display: flex; flex-direction: column; gap: 10px; }
+.dol-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.dol-item-head { display: flex; align-items: center; gap: 8px; }
+.dol-icon { font-size: 1.25rem; }
+.dol-name { font-weight: 700; flex: 1; min-width: 0; }
+.dol-amount { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-secondary); }
+.dol-amount input {
+    width: 92px;
+    text-align: right;
+    padding: 7px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-glass);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+}
+.dol-noamount { color: var(--text-secondary); padding: 0 8px; }
+.dol-remove {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border-glass);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+}
+.dol-price-note { font-size: 0.72rem; color: var(--text-secondary); }
+.dol-price-note.is-changed { color: #f59e0b; }
+.dol-memo { min-height: 56px; }
+.dol-picker {
+    border: 1px dashed var(--accent-cyan);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dol-picker-hint { font-size: 0.75rem; color: var(--text-secondary); }
+.dol-picker-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dol-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: inherit; font-size: 0.82rem;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-glass);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.dol-chip-price { font-size: 0.7rem; color: var(--text-secondary); }
+.dol-add-btn {
+    align-self: flex-start;
+    font: inherit; font-size: 0.85rem; font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent-cyan);
+    background: transparent;
+    color: var(--accent-cyan);
+    cursor: pointer;
+}
+.dolphin-note-label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; }
+.dolphin-total-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-top: 1px solid var(--border-glass);
+    padding-top: 8px;
+}
+.dolphin-total-lbl { font-size: 0.8rem; color: var(--text-secondary); }
+.dolphin-total-val { font-size: 1.3rem; font-weight: 700; color: #10b981; font-variant-numeric: tabular-nums; }
+.dolphin-total-val.empty { color: var(--text-secondary); font-size: 1rem; }
+:root.is-light .dol-price-note.is-changed { color: #b45309; }
+:root.is-light .dolphin-total-val { color: #047857; }
+
+/* カルテ一覧：🐬 施術とメモ */
+.dol-view {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(0, 242, 254, 0.28);
+    border-radius: 12px;
+    background: rgba(0, 242, 254, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+.dol-view-head { font-size: 0.75rem; color: var(--text-secondary); }
+.dol-view-item + .dol-view-item { border-top: 1px solid var(--border-glass); padding-top: 6px; }
+.dol-view-line { display: flex; align-items: center; gap: 6px; }
+.dol-view-name { font-weight: 700; flex: 1; }
+.dol-view-amount { font-variant-numeric: tabular-nums; }
+.dol-view-memo { color: var(--text-secondary); padding-left: 1.6em; white-space: pre-wrap; }

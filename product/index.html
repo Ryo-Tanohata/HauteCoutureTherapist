@@ -868,7 +868,9 @@
                      ひと並びにまとめ、押したものの合計がその日の金額になる。
                      **ふだんは畳むが、閉じたままでも選んだ内容と合計は要約の行に出す。**
                      中が見えないまま畳むと、押し忘れに気づけない。 -->
-                <div class="form-group">
+                <!-- 施術は🐬の中で選ぶ形にした（上の札は出さない）。
+                     金額・書く欄を決める仕組みはこの部品が持っているので、隠して使い続ける。 -->
+                <div class="form-group" id="record-menu-group" hidden>
                     <details class="menu-fold" id="record-menu-fold">
                         <summary>
                             <span class="menu-fold-mark" aria-hidden="true">▶</span>
@@ -897,6 +899,21 @@
                 <div class="form-group">
                     <label for="input-client-complaint" class="mark-label" title="クライアント側の訴え">🌸</label>
                     <textarea id="input-client-complaint" class="form-control" placeholder="例: 肩こり、首まわりの重だるさ"></textarea>
+                </div>
+                <!-- 🐬 施術とメモ。施術ごとに金額とメモを書き、合計を出す -->
+                <div class="form-group dolphin-group">
+                    <div class="dolphin-head">
+                        <span class="mark-label" title="施術とメモ">🐬</span>
+                        <span class="dolphin-title">施術とメモ</span>
+                        <span class="dolphin-sub">施術ごとに金額とメモ</span>
+                    </div>
+                    <div id="record-dolphin" class="record-dolphin"></div>
+                    <label for="input-therapist-note" class="dolphin-note-label">全体の気付き（任意）</label>
+                    <textarea id="input-therapist-note" class="form-control" placeholder="例: 施術後はスッキリしたとのこと。次回は2週間後。"></textarea>
+                    <div class="dolphin-total-row">
+                        <span class="dolphin-total-lbl">合計</span>
+                        <span class="dolphin-total-val empty" id="record-dolphin-total">未定</span>
+                    </div>
                 </div>
                 <!-- その日クライアントが選んだ色。カラーセラピーのカルテの中へ、JSで移して使う -->
                 <div class="form-group" id="record-color-group">
@@ -943,10 +960,6 @@
                 <!-- 🧪 処方も、区分ごとのカルテに書く（ISSUE-080）。
                      「下ごしらえ」が書き込む先なので、入れ物は隠して残す。 -->
                 <textarea id="input-prescription" style="display: none;"></textarea>
-                <div class="form-group">
-                    <label for="input-therapist-note" class="mark-label" title="メモ（気付き）">🐬</label>
-                    <textarea id="input-therapist-note" class="form-control" placeholder="例: 右肩下がりの緊張が強い。施術後はスッキリしたとのこと。"></textarea>
-                </div>
                 <!-- 金額も画面から下ろした（ISSUE-081）。
                      プランを選んだときの値が、ここへ入る。 -->
                 <input type="hidden" id="input-amount">
