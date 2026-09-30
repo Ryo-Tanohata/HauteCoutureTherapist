@@ -152,15 +152,32 @@ async function storeCall(what, { method = 'GET', id = '', body = null } = {}) {
     const { auth } = await storeDerive(cfg.pass);
     const url = `${cfg.apiBase || ''}/api/sync?what=${encodeURIComponent(what)}`
         + (id ? `&id=${encodeURIComponent(id)}` : '');
-    const res = await fetch(url, {
-        method,
-        headers: {
-            'x-salon-auth': auth,
-            ...(body ? { 'Content-Type': 'application/octet-stream' } : {})
-        },
-        body,
-        cache: 'no-store'
-    });
+    let res;
+    try {
+        res = await fetch(url, {
+            method,
+            headers: {
+                'x-salon-auth': auth,
+                ...(body ? { 'Content-Type': 'application/octet-stream' } : {})
+            },
+            body,
+            cache: 'no-store',
+            credentials: 'same-origin',
+            // 入口の鍵（Cloudflare Access）のログインが切れていると、窓口の代わりに
+            // ログイン画面へ回される。追いかけると別のサイトへの移動になって
+            // 「Load failed」としか分からないので、追いかけずにその場で見分ける。
+            redirect: 'manual'
+        });
+    } catch (e) {
+        throw new Error(navigator.onLine === false
+            ? '通信できませんでした。インターネットにつながっているか確かめてください。'
+            : '置き場と通信できませんでした。ページを再読み込みしてもう一度お試しください。'
+              + '（DuckDuckGo など、追跡を止めるブラウザでは、ログインの記録が消されて起きることがあります）');
+    }
+    if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
+        throw new Error('入口のログインが切れています。ページを再読み込みし、メールに届く数字でログインし直してください。'
+            + '（DuckDuckGo では、このサイトを「ファイアプルーフ」にすると切れにくくなります）');
+    }
     if (res.status === 401) throw new Error('合言葉が違うようです。');
     if (res.status === 404) return null;
     if (!res.ok) {
