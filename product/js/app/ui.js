@@ -3190,7 +3190,7 @@ function initApp() {
                 // 施術中に画面を送っていて生年月日を書き換える、が起こりえた。
                 tabContentArea.innerHTML = `
                     <div class="personal-info-bar">
-                        <span class="personal-info-title">👤 この方のこと</span>
+                        <span class="personal-info-title">👤 この方のこと${helpButtonHtml('2-13', '情報の直し方')}</span>
                         <button type="button" id="btn-personal-edit" class="personal-info-edit"
                                 aria-pressed="${personalEditOn ? 'true' : 'false'}">
                             ${personalEditOn ? '✅ 編集をやめる' : '✏️ 編集する'}
@@ -4018,7 +4018,7 @@ function initApp() {
 
         tabContentArea.innerHTML = `
             <div class="personal-info-bar">
-                <span class="personal-info-title">👤 この方のこと（編集中）</span>
+                <span class="personal-info-title">👤 この方のこと（編集中）${helpButtonHtml('2-13', '情報の直し方')}</span>
                 <button type="button" id="btn-pe-save-top" class="personal-info-edit pe-save">💾 保存する</button>
             </div>
             <form id="personal-edit-form" class="pe-form" autocomplete="off" onsubmit="return false;">
@@ -4836,7 +4836,7 @@ function initApp() {
         }
         const line = document.getElementById('record-save-state');
         if (line) {
-            line.textContent = `⚠ ${err.message}`;
+            line.innerHTML = `⚠ ${escapeHtml(err.message)}<button type="button" class="help-link" data-help="7-3">どうすれば？</button>`;
             line.classList.remove('is-saved', 'is-flash');
             line.classList.add('is-failed');
         }
@@ -6938,7 +6938,8 @@ function initApp() {
     function setBackupStatus(text, kind) {
         const el = document.getElementById('backup-status');
         if (!el) return;
-        el.textContent = text || '';
+        el.innerHTML = escapeHtml(text || '') + (kind === 'error'
+            ? `<button type="button" class="help-link" data-help="6-2">どうすれば？</button>` : '');
         el.className = 'backup-status' + (kind ? ` is-${kind}` : '');
     }
 
@@ -7371,7 +7372,9 @@ function initApp() {
     function setSalonStatus(text, kind) {
         const el = document.getElementById('salon-status');
         if (!el) return;
-        el.textContent = text || '';
+        // 失敗のときは、どうすればよいかへ飛べるようにする
+        el.innerHTML = escapeHtml(text || '') + (kind === 'error'
+            ? `<button type="button" class="help-link" data-help="7-2">どうすれば？</button>` : '');
         el.className = 'backup-status' + (kind ? ` is-${kind}` : '');
     }
 
@@ -11829,6 +11832,46 @@ function initApp() {
             window.open('manual.html', '_blank', 'noopener');
         });
     }
+
+    // ------------------------------------------------------------------
+    // 画面ごとの「？」：取扱説明書の、その画面の箇所を重ねて開く。
+    // 別のタブにしないのは、ホーム画面から開いたアプリだと Safari へ飛ばされ、
+    // 戻ってきたときに書きかけが見えなくなるため。閉じれば元の画面のまま。
+    // 目印は data-help="2-6" のように説明書の見出し番号で書く（後から描く画面も拾える）。
+    // ------------------------------------------------------------------
+    function openManualAt(anchor) {
+        let veil = document.getElementById('manual-overlay');
+        if (!veil) {
+            veil = document.createElement('div');
+            veil.id = 'manual-overlay';
+            veil.className = 'manual-overlay';
+            veil.innerHTML = '<div class="manual-sheet"><iframe title="取扱説明書"></iframe></div>';
+            veil.addEventListener('click', (e) => { if (e.target === veil) veil.classList.remove('active'); });
+            document.body.appendChild(veil);
+        }
+        const frame = veil.querySelector('iframe');
+        frame.src = `manual.html?embed=1${anchor ? `#${encodeURIComponent(anchor)}` : ''}`;
+        veil.classList.add('active');
+    }
+    window.addEventListener('message', (e) => {
+        if (e.origin !== location.origin) return;
+        if (e.data && e.data.type === 'manual-close') {
+            const veil = document.getElementById('manual-overlay');
+            if (veil) veil.classList.remove('active');
+        }
+    });
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-help]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openManualAt(btn.dataset.help);
+    }, true);
+    /** 説明書の箇所へ飛ぶ小さな「？」。文字列で画面に差し込むとき用 */
+    function helpButtonHtml(anchor, label = 'この画面の説明') {
+        return `<button type="button" class="help-q" data-help="${escapeHtml(anchor)}" title="${escapeHtml(label)}を開く" aria-label="${escapeHtml(label)}を開く">？</button>`;
+    }
+    window.__helpButtonHtml = helpButtonHtml;
 
     function initLongPressTooltips() {
         const HOLD_MS = 500;

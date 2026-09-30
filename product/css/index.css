@@ -7313,3 +7313,42 @@ body {
     border: 1px solid var(--border-glass); background: transparent;
     color: var(--text-secondary); cursor: pointer;
 }
+
+/* 画面ごとの「？」と、取扱説明書の重ね表示 */
+.help-q {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; min-width: 26px;
+    margin-left: 6px; padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    font: inherit; font-size: 0.8rem; font-weight: 700; line-height: 1;
+    cursor: pointer; vertical-align: middle;
+    position: relative;
+}
+/* 指で押しやすいよう、見た目より広く反応させる */
+.help-q::after { content: ''; position: absolute; inset: -9px; }
+.help-q:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.help-link {
+    display: inline-block; margin-left: 6px;
+    font: inherit; font-size: 0.85em; font-weight: 600;
+    color: var(--accent-cyan); background: none; border: none; padding: 0;
+    text-decoration: underline; cursor: pointer;
+}
+.manual-overlay {
+    position: fixed; inset: 0; z-index: 30000;
+    background: rgba(0, 0, 0, 0.55);
+    display: none; align-items: flex-end; justify-content: center;
+}
+.manual-overlay.active { display: flex; }
+.manual-sheet {
+    width: min(760px, 100%);
+    height: calc(88vh - env(safe-area-inset-top));
+    height: calc(88dvh - env(safe-area-inset-top));
+    background: var(--bg-base);
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
+}
+.manual-sheet iframe { width: 100%; height: 100%; border: 0; display: block; }

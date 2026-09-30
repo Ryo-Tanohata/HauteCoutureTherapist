@@ -249,6 +249,21 @@ async function attachVideos() {
 
         // 同じタブで開いたまま別の見出しへ飛ばされることもある
         window.addEventListener('hashchange', jumpToHash);
+
+        // アプリの「？」から、画面に重ねて開かれたとき（manual.html?embed=1）。
+        // 「アプリへ戻る」で中の枠ごとアプリへ移ると二重になるので、閉じるボタンにする
+        if (new URLSearchParams(location.search).get('embed') === '1') {
+            document.documentElement.classList.add('is-embed');
+            const back = document.querySelector('.back-link');
+            if (back) {
+                back.textContent = '✕ 閉じる';
+                back.setAttribute('href', '#');
+                back.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    try { window.parent.postMessage({ type: 'manual-close' }, location.origin); } catch (err) { /* noop */ }
+                });
+            }
+        }
     } catch (e) {
         bodyEl.innerHTML = '<p class="failed"><strong>説明書を読み込めませんでした。</strong>'
             + '<br>電波を確かめて、開き直してみてください。</p>';

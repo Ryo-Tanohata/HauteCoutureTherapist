@@ -71,6 +71,8 @@
             border-bottom: 1px solid var(--border); scroll-margin-top: 76px;
         }
         main h3 { font-size: 1.03rem; margin: 26px 0 8px; color: var(--cyan); scroll-margin-top: 76px; }
+        /* スマホは上の帯が2段になる（戻る＋検索）。飛んだ先の見出しが帯の裏に隠れないように */
+        @media (max-width: 720px) { main h2, main h3 { scroll-margin-top: 150px; } }
         main p { margin: 10px 0; }
         main ul, main ol { padding-left: 1.35em; }
         main li { margin: 4px 0; }

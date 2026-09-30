@@ -174,6 +174,7 @@
                         <input type="text" id="search-input" class="search-input" placeholder="名前・かな・IDで検索...">
                     </div>
                     <div class="search-actions">
+                        <button type="button" class="help-q" data-help="3-1" title="顧客一覧の説明を開く" aria-label="顧客一覧の説明を開く">？</button>
                         <div class="btn-archive-toggle" title="アーカイブ表示切替">
                             <input type="checkbox" id="check-show-archived" class="hidden-checkbox">
                             <label for="check-show-archived" class="action-chip-btn archive-chip">
@@ -214,6 +215,7 @@
                         <button id="calendar-prev-btn" class="calendar-nav-btn">&larr;</button>
                         <div id="calendar-month-title" class="calendar-title">2026年 7月</div>
                         <button id="calendar-next-btn" class="calendar-nav-btn">&rarr;</button>
+                        <button type="button" class="help-q" data-help="2-1" title="予約の入れ方を開く" aria-label="予約の入れ方を開く">？</button>
                     </div>
                     <div class="calendar-grid">
                         <div class="calendar-weekday">日</div>
@@ -263,7 +265,7 @@
                         -->
                         <div class="cloud-panel" id="salon-panel">
                             <h3 style="font-size: 0.9rem; font-weight: 700; margin-top: 0; margin-bottom: 8px; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
-                                🔑 サロンの置き場と同期<span class="folder-badge">サインイン不要</span>
+                                🔑 サロンの置き場と同期<span class="folder-badge">サインイン不要</span><button type="button" class="help-q" data-help="1-1" title="置き場のつなぎ方を開く" aria-label="置き場のつなぎ方を開く">？</button>
                             </h3>
                             <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.7;">
                                 <strong>合言葉を1回入れるだけ</strong>です。アカウントも登録も要りません。iPhone でも使えます。<br>
@@ -312,7 +314,7 @@
                         <!-- データの持ち出しと取り込み。機種変更や、万一の備え。 -->
                         <div class="backup-panel" id="backup-panel">
                             <h3 style="font-size: 0.9rem; font-weight: 700; margin-top: 0; margin-bottom: 8px; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
-                                💾 データの書き出し・読み込み
+                                💾 データの書き出し・読み込み<button type="button" class="help-q" data-help="6-2" title="控えの取り方を開く" aria-label="控えの取り方を開く">？</button>
                             </h3>
                             <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.7;">
                                 顧客・記録・写真をまとめて1つのファイルにします。別の端末で読み込めば、そのまま続きが使えます。
@@ -510,7 +512,7 @@
                 <section id="astro-aroma-view-container" style="display: none;" class="astro-aroma-section">
                     <div class="astro-head">
                         <div class="salon-art-banner" role="img" aria-label="サロンのアートワーク"></div>
-                        <h2>🌿 星とアロマの見立て表</h2>
+                        <h2>🌿 星とアロマの見立て表<button type="button" class="help-q" data-help="3-5" title="見立て表の説明を開く" aria-label="見立て表の説明を開く">？</button></h2>
                         <p id="astro-source-note"></p>
                     </div>
                     <!-- いま誰を見ているかで、使えない精油に印を付ける -->
@@ -534,7 +536,7 @@
                         <div class="salon-art-banner" role="img" aria-label="サロンのアートワーク"></div>
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px;">
                             <h2 id="advice-title" style="color: var(--accent-cyan); font-size: 1.35rem; margin: 0; display: flex; align-items: center; gap: 10px;">
-                                ✨ 今日の星詠みメッセージ
+                                ✨ 今日の星詠みメッセージ<button type="button" class="help-q" data-help="3-4" title="星詠みの説明を開く" aria-label="星詠みの説明を開く">？</button>
                             </h2>
                             <!-- 期間選択タブ -->
                             <div id="advice-period-tabs">
@@ -593,6 +595,7 @@
                                 <span id="detail-name-colors" class="detail-name-colors"></span>
                                 <span class="detail-name-mark" aria-hidden="true">›</span>
                             </button>
+                            <button type="button" class="help-q" data-help="3-3" title="カルテの見方を開く" aria-label="カルテの見方を開く">？</button>
                             <div class="detail-head-actions">
                                 <button id="btn-detail-archive" title="アーカイブ操作" class="detail-head-btn">
                                     <span>📦</span><span id="btn-detail-archive-text" class="btn-text">アーカイブ</span>
@@ -669,7 +672,7 @@
 
     <div class="modal-overlay" id="customer-modal">
         <div class="modal-content">
-            <h3 id="customer-modal-title" style="font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px;">新規顧客の登録</h3>
+            <h3 style="font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; display: flex; align-items: center;"><span id="customer-modal-title">新規顧客の登録</span><button type="button" class="help-q" data-help="2-2" title="登録のしかたを開く" aria-label="登録のしかたを開く">？</button></h3>
             <form id="customer-form" style="display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto; padding-right: 8px; margin-bottom: 12px;">
                 <!-- 基本情報セクション -->
                 <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; border: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 12px;">
@@ -833,7 +836,7 @@
     <div class="modal-overlay" id="record-modal">
         <div class="modal-content" style="max-width: 500px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px;">
-                <h3 id="record-modal-title" style="font-size: 1.2rem; font-weight: 700; margin: 0;">施術内容・金額の記録</h3>
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; display: flex; align-items: center;"><span id="record-modal-title">施術内容・金額の記録</span><button type="button" class="help-q" data-help="2-6" title="記録の書き方を開く" aria-label="記録の書き方を開く">？</button></h3>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span id="record-draft-indicator" style="font-size: 0.7rem; color: var(--accent-cyan); opacity: 0; transition: opacity 0.3s;">⚡ 自動保存済</span>
                     <!-- カルテの書き方のデモ。開いているこの記録から続けて始まる。 -->
@@ -905,6 +908,7 @@
                     <!-- 説明の文字は出さない。🐬を長押しすると出る（title を長押しの説明に使う） -->
                     <div class="dolphin-head">
                         <span class="mark-label" title="施術とメモ：施術ごとに金額・メモ・写真を書きます">🐬</span>
+                        <button type="button" class="help-q" data-help="4-3" title="施術の選び方を開く" aria-label="施術の選び方を開く">？</button>
                     </div>
                     <div id="record-dolphin" class="record-dolphin"></div>
                     <label for="input-therapist-note" class="dolphin-note-label">全体の気付き（任意）</label>
@@ -1271,7 +1275,7 @@
         <div class="modal-content" style="max-width: 560px; width: 100%; display: flex; flex-direction: column; max-height: 90vh;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <h2 style="margin: 0; font-size: 1.1rem; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
-                    🗓️ <span id="booking-modal-title">予約・施術記録を追加</span>
+                    🗓️ <span id="booking-modal-title">予約・施術記録を追加</span><button type="button" class="help-q" data-help="2-1" title="予約の入れ方を開く" aria-label="予約の入れ方を開く">？</button>
                 </h2>
                 <button type="button" id="btn-close-booking" class="btn-close" title="閉じる">&times;</button>
             </div>
@@ -1359,7 +1363,7 @@
     <!-- ⚙️ 施術プラン管理モーダル -->
     <div class="modal-overlay" id="plan-modal">
         <div class="modal-content" style="max-width: 450px; display: flex; flex-direction: column;">
-            <h3 style="font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0;">施術プランの管理</h3>
+            <h3 style="font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; display: flex; align-items: center;">施術プランの管理<button type="button" class="help-q" data-help="4-5" title="メニューの足し方を開く" aria-label="メニューの足し方を開く">？</button></h3>
             
             <div id="plan-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px; flex-grow: 1;">
                 <!-- プラン一覧がここに表示されます -->
