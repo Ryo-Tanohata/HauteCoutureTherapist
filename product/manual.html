@@ -125,6 +125,17 @@
             nav.toc a.lv3 { display: none; }
             main h2 { font-size: 1.15rem; }
         }
+        /* 「？」から開いたとき：その箇所だけを見せる（manual.js の focusOn） */
+        .mf-hide { display: none !important; }
+        .is-focus .toc, .is-focus #manual-search { display: none !important; }
+        .is-focus .layout { display: block; }
+        .is-focus main { max-width: none; }
+        .focus-footer { display: none; margin: 28px 0 40px; text-align: center; }
+        .is-focus .focus-footer { display: block; }
+        .focus-all {
+            font: inherit; font-size: 0.9rem; padding: 10px 18px; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent; color: var(--cyan); cursor: pointer;
+        }
     </style>
 </head>
 <body>
