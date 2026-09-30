@@ -2467,6 +2467,36 @@ function initApp() {
         
         if (field === 'birthday') input.type = 'date';
         if (field === 'phone') input.type = 'tel';
+        if (field === 'customerNo') {
+            input.autocomplete = 'off';
+            input.spellcheck = false;
+            input.setAttribute('autocapitalize', 'characters');
+        }
+
+        // 顧客No. は、打っている間に重なりを知らせる
+        let noHint = null;
+        const checkNo = () => {
+            if (field !== 'customerNo') return null;
+            const v = normalizeCustomerNo(input.value);
+            let problem = null;
+            if (!v) problem = '顧客No. を空にはできません。';
+            else {
+                const owner = findCustomerNoOwner(v, customer.id);
+                if (owner) problem = `${v} はすでに ${owner.name || '別の方'} 様${owner.isArchived ? '（保管中）' : ''}が使っています。`;
+            }
+            if (noHint) {
+                noHint.textContent = problem ? `⚠ ${problem}` : '';
+                noHint.style.display = problem ? 'block' : 'none';
+            }
+            input.style.borderColor = problem ? '#ff8a8a' : 'var(--accent-cyan)';
+            return problem;
+        };
+        if (field === 'customerNo') {
+            noHint = document.createElement('small');
+            noHint.setAttribute('aria-live', 'polite');
+            noHint.style.cssText = 'display: none; margin-top: 4px; font-size: 0.75rem; color: #ff8a8a;';
+            input.addEventListener('input', checkNo);
+        }
         
         // 保存・キャンセルボタン
         const actions = document.createElement('div');
@@ -2496,6 +2526,7 @@ function initApp() {
         targetValueEl.style.display = 'none';
         
         container.appendChild(input);
+        if (noHint) container.appendChild(noHint);
         container.appendChild(actions);
         input.focus();
         
@@ -2506,6 +2537,7 @@ function initApp() {
         
         const closeEdit = () => {
             input.remove();
+            if (noHint) noHint.remove();
             actions.remove();
             targetValueEl.style.display = originalDisplay;
             if (originalTitle) container.setAttribute('title', originalTitle);
@@ -2515,7 +2547,16 @@ function initApp() {
         
         btnSave.onclick = (e) => {
             e.stopPropagation();
-            const newValue = input.value;
+            let newValue = input.value;
+            if (field === 'customerNo') {
+                const problem = checkNo();
+                if (problem) {
+                    showToast(problem, 'error');
+                    input.focus();
+                    return; // 編集は開いたまま。直してから保存してもらう
+                }
+                newValue = normalizeCustomerNo(newValue);
+            }
             const updateData = {};
             if (intakeKey) {
                 // 他の枠を消さないよう、いまの中身に重ねて書く
@@ -3118,7 +3159,7 @@ function initApp() {
                             </div>
                         </div>
                         <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 120px; padding: 8px;">
+                            <div class="quick-edit-field" data-field="customerNo" title="顧客No.を編集（同じ番号は使えません）" style="flex: 1; min-width: 120px; cursor: pointer; transition: all 0.2s; padding: 8px; border-radius: 8px; border: 1px solid transparent;">
                                 <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">顧客No.</span>
                                 <div class="field-value" style="font-size: 0.95rem; font-weight: 500; color: var(--text-primary);">${escapeHtml(customer.customerNo || '未設定')}</div>
                             </div>
