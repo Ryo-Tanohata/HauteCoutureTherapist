@@ -117,7 +117,7 @@ async function storeDerive(pass) {
 
 /**
  * 合言葉から、サーバーに置いてもらう値を作る。
- * 設定のときに画面へ出して、サーバー の環境変数 SALON_KEY に写してもらう。
+ * 設定のときに画面へ出して、サーバーの環境変数 SECRET に写してもらう。
  */
 export async function storeAuthValue(pass) {
     return (await storeDerive(pass)).auth;

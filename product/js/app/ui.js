@@ -6996,7 +6996,7 @@ function initApp() {
                 const slot = document.getElementById('salon-key-value');
                 if (out) out.hidden = false;
                 if (slot) slot.textContent = value;
-                setSalonStatus('この値を SALON_KEY に貼ってください。', 'ok');
+                setSalonStatus('この値を Cloudflare の SECRET に貼ってください。', 'ok');
             } catch (e) {
                 setSalonStatus(`⚠ ${e.message}`, 'error');
             }

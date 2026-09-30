@@ -176,7 +176,7 @@ Workers & Pages → hautecouturetherapist → 右上: 🦊 loutarma/HauteCouture
 1. Cloudflare で **R2 バケット**を作る
 2. Pages プロジェクトの Settings → Functions → **R2 バケットバインディング**で、変数名 `SALON_STORE` としてそのバケットを結びつける
 3. アプリを **`https://<サイト>/#salon-key`** で開く →「はじめての設定」が出るので、決めた合言葉を入れて**値を出す**
-4. その値を Cloudflare の環境変数 **`SALON_KEY`** に設定して、再デプロイする
+4. その値を Cloudflare の環境変数 **`SECRET`**（Secret 型。以前の名前 `SALON_KEY` でも動く）に設定して、再デプロイする
 5. 各端末で、同じ合言葉を入れる
 
 **「はじめての設定」は、`#salon-key` を付けたときだけ出ます。** 置き場を用意する側の作業であって、セラピストがするものではないためです。ふだんの設定画面には合言葉の欄しか出ません。

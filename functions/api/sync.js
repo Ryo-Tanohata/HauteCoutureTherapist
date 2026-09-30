@@ -26,7 +26,7 @@
 //
 // ── 要る設定（Cloudflare の画面で1回だけ） ──
 //   R2 バケットを SALON_STORE という名前で結びつける
-//   環境変数 SALON_KEY に、アプリが出す値を入れる
+//   環境変数 SECRET（以前の名前 SALON_KEY も可）に、アプリが出す値を入れる
 
 const DATA_KEY = 'salon/data.bin';
 const PHOTO_PREFIX = 'salon/photos/';
@@ -77,10 +77,12 @@ function sameSecret(a, b) {
 export async function onRequest(context) {
     const { request, env } = context;
 
-    if (!env.SALON_KEY) {
+    // 置き場の鍵の値。名前は SECRET（推奨）か、以前の SALON_KEY のどちらでもよい
+    const serverKey = env.SECRET || env.SALON_KEY;
+    if (!serverKey) {
         return json({
             error: 'このサーバーにはまだ合言葉が設定されていません。'
-                + 'Cloudflare の環境変数 SALON_KEY を設定してください。'
+                + 'Cloudflare の環境変数 SECRET を設定してください。'
         }, 503);
     }
     if (!env.SALON_STORE) {
@@ -89,7 +91,7 @@ export async function onRequest(context) {
                 + 'Cloudflare で R2 バケットを SALON_STORE という名前で結びつけてください。'
         }, 503);
     }
-    if (!sameSecret(request.headers.get('x-salon-auth'), env.SALON_KEY)) {
+    if (!sameSecret(request.headers.get('x-salon-auth'), serverKey)) {
         return json({ error: '合言葉が違うようです。' }, 401);
     }
 
