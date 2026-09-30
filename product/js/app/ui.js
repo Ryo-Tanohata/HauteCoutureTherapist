@@ -11204,6 +11204,17 @@ function initApp() {
 // エントリポイント：初回表示 + bfcache / 別ページ遷移からの復帰に対応
 // -------------------------------------------------------------------
 
+// iPhone・iPad の Safari は、しばらく開かないサイトのデータを消すことがある。
+// 「消さないでほしい」と頼んでおく。ホーム画面から開く形なら通りやすい。
+// 断られても動きは変わらない（置き場との同期と書き出しが守りになる）。
+try {
+    if (navigator.storage && typeof navigator.storage.persist === 'function') {
+        navigator.storage.persisted()
+            .then((already) => (already ? true : navigator.storage.persist()))
+            .catch(() => { /* 頼めない環境 */ });
+    }
+} catch (e) { /* noop */ }
+
 // 既にDOMが構築済みの場合（bfcache等）は即時実行
 if (document.readyState === 'loading') {
     // まだパース中なら DOMContentLoaded を待つ

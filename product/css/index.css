@@ -1574,6 +1574,7 @@ textarea.form-control {
     .workspace-grid.detail-mode .workspace-column-left .customer-list {
         grid-template-columns: 1fr !important;
         max-height: calc(100vh - 210px);
+        max-height: calc(100dvh - 210px);
         overflow-y: auto;
         padding-right: 6px;
     }
@@ -1892,6 +1893,7 @@ textarea.form-control {
 /* モーダル共通調整 */
     .modal-content {
         max-height: 85vh;
+        max-height: 85dvh;
         width: 94%;
         padding: 20px;
         overflow-y: auto;
@@ -7010,3 +7012,53 @@ body.prep-hidden .visit-prep-mark {
     box-shadow: 0 0 0 1px rgba(255, 138, 138, 0.35);
 }
 :root.is-light #input-customer-no.is-invalid { border-color: #be123c; }
+
+
+/* ==================================================================
+   iPhone / iPad
+   ホーム画面から開くと、画面は時計・電波の表示の裏や、下の
+   ホームバーの上まで広がる（viewport-fit=cover と black-translucent）。
+   そのぶんを env(safe-area-inset-*) で空けておかないと、見出しや
+   ボタンが切り欠きの裏に潜る。Safari で開いたときは 0 なので影響しない。
+   ================================================================== */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+body {
+    min-height: 100vh;
+    min-height: 100dvh; /* Safari のアドレスバーの出入りに合わせる */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+.app-header, header {
+    padding-top: calc(16px + env(safe-area-inset-top));
+}
+@media (max-width: 640px) {
+    .app-header, header {
+        padding-top: calc(10px + env(safe-area-inset-top));
+    }
+}
+/* 下から出る入力画面は、ホームバーに「登録する」が重ならないように */
+.modal-content {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+@media (max-width: 640px) {
+    .modal-content { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
+#tour-bar { bottom: calc(18px + env(safe-area-inset-bottom)); }
+.storage-warning { padding-top: calc(10px + env(safe-area-inset-top)); }
+
+/* iPhone・iPad の Safari は、16px 未満の入力欄をタップすると画面を
+   勝手に拡大する。施術中に毎回つまんで戻すのは手間なので、
+   iOS / iPadOS のときだけ入力欄を 16px にそろえる。 */
+@supports (-webkit-touch-callout: none) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    select,
+    textarea,
+    .form-control {
+        font-size: 16px !important;
+    }
+}
+
+#customer-no-hint:empty { display: none; }
