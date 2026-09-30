@@ -7302,3 +7302,14 @@ body {
 .advice-sources ul { margin: 0; padding-left: 18px; }
 .advice-sources li { margin-bottom: 4px; line-height: 1.5; word-break: break-all; }
 .advice-sources a { color: var(--text-secondary); text-decoration: underline; }
+
+/* カレンダーの日付から🐬の記録画面へ */
+.booking-write-btn { width: 100%; padding: 12px; font-size: 0.95rem; margin-top: 10px; }
+.booking-legacy-form[hidden] { display: none !important; }
+.dol-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dol-menu-edit {
+    font: inherit; font-size: 0.8rem;
+    padding: 8px 12px; border-radius: 999px;
+    border: 1px solid var(--border-glass); background: transparent;
+    color: var(--text-secondary); cursor: pointer;
+}

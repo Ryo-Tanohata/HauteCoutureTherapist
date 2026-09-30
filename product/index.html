@@ -1281,7 +1281,14 @@
                 <!-- その日にすでに入っている予約。書く前に見えていれば、そもそも重ねない（ISSUE-066） -->
                 <div id="booking-day-list" class="booking-day-list" style="display: none;"></div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- 書くのは🐬の記録画面（お客様・時間・施術と金額・メモ・写真）。
+                     ここは「この日に誰が入っているか」を見て、書く画面を開く入口にした。
+                     以前の簡易フォームは、同じ記録を2通りの形で書けてしまうので下ろしてある。 -->
+                <button type="button" id="btn-booking-write" class="btn-primary booking-write-btn">
+                    ✍️ この日の記録を書く
+                </button>
+
+                <div class="booking-legacy-form" hidden style="display: none; flex-direction: column; gap: 8px;">
                     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                         <div style="flex: 1; min-width: 140px;">
                             <span style="font-size: 0.75rem; color: var(--text-secondary);">対象顧客</span>

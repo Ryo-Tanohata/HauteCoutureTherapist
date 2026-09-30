@@ -5761,7 +5761,10 @@ function initApp() {
                             </button>`).join('')}
                     </div>
                 </div>` : ''}
-            <button type="button" class="dol-add-btn" id="btn-dol-toggle">${dolphinPickerOpen ? '閉じる' : '＋ 施術を追加'}</button>
+            <div class="dol-add-row">
+                <button type="button" class="dol-add-btn" id="btn-dol-toggle">${dolphinPickerOpen ? '閉じる' : '＋ 施術を追加'}</button>
+                ${dolphinPickerOpen ? '<button type="button" class="dol-menu-edit" id="btn-dol-menu-edit">⚙️ メニューを編集</button>' : ''}
+            </div>
         `;
         paintDolphinTotal();
 
@@ -5769,6 +5772,14 @@ function initApp() {
             dolphinPickerOpen = !dolphinPickerOpen;
             renderDolphin();
         };
+        // メニューの編集は、隠してある施術内容の中のボタンと同じものを開く
+        const menuEditBtn = host.querySelector('#btn-dol-menu-edit');
+        if (menuEditBtn) {
+            menuEditBtn.onclick = () => {
+                const real = document.querySelector('#record-menu-group .btn-manage-plans');
+                if (real) real.click();
+            };
+        }
         host.querySelectorAll('[data-dol-add]').forEach((b) => {
             b.onclick = () => {
                 const key = b.dataset.dolAdd;
@@ -8071,6 +8082,18 @@ function initApp() {
     if (inlineRecordTime) inlineRecordTime.addEventListener('change', markBookingClashes);
     if (btnOpenBooking) btnOpenBooking.addEventListener('click', openBookingModal);
     if (btnCloseBooking) btnCloseBooking.addEventListener('click', closeBookingModal);
+    // 「この日の記録を書く」：カレンダーの日付から、🐬の記録画面（お客様を選ぶ欄つき）を開く
+    const btnBookingWrite = document.getElementById('btn-booking-write');
+    if (btnBookingWrite) {
+        btnBookingWrite.addEventListener('click', () => {
+            if (!selectedCalendarDateStr) {
+                showToast('日付を選んでから押してください。', 'error');
+                return;
+            }
+            closeBookingModal();
+            if (openNewRecordRequested) openNewRecordRequested(selectedCalendarDateStr);
+        });
+    }
     if (bookingModal) {
         bookingModal.addEventListener('click', (e) => {
             if (e.target === bookingModal) closeBookingModal();
