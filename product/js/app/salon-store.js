@@ -146,33 +146,45 @@ async function unseal(key, bytes) {
 // 置き場とのやりとり
 // ------------------------------------------------------------------
 
+/** 失敗したときに、どのやりとりで止まったかを出すための呼び名 */
+const STEP_LABEL = { ping: '確認', data: 'カルテ', photos: '写真の一覧', photo: '写真' };
+
 async function storeCall(what, { method = 'GET', id = '', body = null } = {}) {
     const cfg = getStoreConfig();
     if (!cfg.pass) throw new Error('合言葉が設定されていません。');
     const { auth } = await storeDerive(cfg.pass);
     const url = `${cfg.apiBase || ''}/api/sync?what=${encodeURIComponent(what)}`
         + (id ? `&id=${encodeURIComponent(id)}` : '');
+    const doFetch = () => fetch(url, {
+        method,
+        headers: {
+            'x-salon-auth': auth,
+            ...(body ? { 'Content-Type': 'application/octet-stream' } : {})
+        },
+        body,
+        cache: 'no-store',
+        credentials: 'same-origin',
+        // 入口の鍵（Cloudflare Access）のログインが切れていると、窓口の代わりに
+        // ログイン画面へ回される。追いかけると別のサイトへの移動になって
+        // 「Load failed」としか分からないので、追いかけずにその場で見分ける。
+        redirect: 'manual'
+    });
     let res;
     try {
-        res = await fetch(url, {
-            method,
-            headers: {
-                'x-salon-auth': auth,
-                ...(body ? { 'Content-Type': 'application/octet-stream' } : {})
-            },
-            body,
-            cache: 'no-store',
-            credentials: 'same-origin',
-            // 入口の鍵（Cloudflare Access）のログインが切れていると、窓口の代わりに
-            // ログイン画面へ回される。追いかけると別のサイトへの移動になって
-            // 「Load failed」としか分からないので、追いかけずにその場で見分ける。
-            redirect: 'manual'
-        });
-    } catch (e) {
-        throw new Error(navigator.onLine === false
-            ? '通信できませんでした。インターネットにつながっているか確かめてください。'
-            : '置き場と通信できませんでした。ページを再読み込みしてもう一度お試しください。'
-              + '（DuckDuckGo など、追跡を止めるブラウザでは、ログインの記録が消されて起きることがあります）');
+        res = await doFetch();
+    } catch (first) {
+        // 一瞬の途切れ（画面の切り替え、電波の揺れ）は、少し待ってもう1回で通ることが多い
+        await new Promise((r) => setTimeout(r, 1200));
+        try {
+            res = await doFetch();
+        } catch (e) {
+            const step = STEP_LABEL[what] || what;
+            const why = (e && e.message) ? e.message : String(e);
+            throw new Error(navigator.onLine === false
+                ? '通信できませんでした。インターネットにつながっているか確かめてください。'
+                : `置き場と通信できませんでした（${step}・${method}：${why}）。ページを再読み込みしてもう一度お試しください。`
+                  + '（DuckDuckGo など、追跡を止めるブラウザでは、ログインの記録が消されて起きることがあります）');
+        }
     }
     if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
         throw new Error('入口のログインが切れています。ページを再読み込みし、メールに届く数字でログインし直してください。'
