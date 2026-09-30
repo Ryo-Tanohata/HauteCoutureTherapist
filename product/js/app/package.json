@@ -1,0 +1,4 @@
+{
+  "//": "このフォルダはブラウザ用の ES モジュール。サーバー（CommonJS）から session-prompt.js を import() するために、Node へも ESM だと伝える。",
+  "type": "module"
+}

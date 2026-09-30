@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELARA</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#080d18">
+    <link rel="icon" href="images/icon-192.png">
+    <style>
+        :root {
+            --bg: #080d18;
+            --panel: rgba(255, 255, 255, 0.028);
+            --border: rgba(255, 255, 255, 0.09);
+            --text: #dce6f5;
+            --muted: #8496b0;
+            --ice: #7dd3fc;
+            --warm: #f0abfc;
+            --zero: #fca5a5;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background:
+                radial-gradient(1100px 520px at 50% -180px, rgba(125, 211, 252, 0.10), transparent 70%),
+                var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+            line-height: 1.8;
+            -webkit-text-size-adjust: 100%;
+        }
+        .topbar {
+            position: sticky; top: 0; z-index: 20;
+            display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+            padding: 12px 18px;
+            background: rgba(8, 13, 24, 0.93);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .topbar .mark {
+            font-size: 1.05rem; font-weight: 700; letter-spacing: 0.22em;
+            color: var(--ice);
+        }
+        .topbar .model {
+            font-size: 0.72rem; letter-spacing: 0.16em; color: var(--muted);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .topbar .spacer { flex: 1 1 auto; }
+        .topbar .stamp { font-size: 0.74rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+
+        .wrap { max-width: 880px; margin: 0 auto; padding: 26px 18px 100px; }
+
+        .intro {
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background: rgba(125, 211, 252, 0.05);
+            border-radius: 14px; padding: 16px 18px; margin: 0 0 34px;
+        }
+        .intro p { margin: 6px 0; font-size: 0.92rem; }
+        .intro .quiet { color: var(--muted); font-size: 0.85rem; }
+
+        .obs { margin: 0 0 40px; }
+        .obs h2 {
+            font-size: 1.05rem; margin: 0 0 6px; font-weight: 700;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+        .obs .lead { margin: 8px 0 14px; color: var(--muted); font-size: 0.87rem; }
+        .none { color: var(--muted); font-size: 0.9rem; margin: 8px 0; }
+        .figure-note { color: var(--muted); font-size: 0.82rem; margin: 10px 0 0; }
+
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+        .card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .card-key { font-size: 0.76rem; color: var(--muted); letter-spacing: 0.04em; }
+        .card-val {
+            font-size: 1.2rem; font-weight: 700; color: #fff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            line-height: 1.4; word-break: break-word;
+        }
+        .card-note { font-size: 0.74rem; color: var(--muted); line-height: 1.6; }
+
+        .tally { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin: 6px 0 0; }
+        .tally caption {
+            caption-side: top; text-align: left; color: var(--muted);
+            font-size: 0.78rem; padding-bottom: 6px;
+        }
+        .tally th, .tally td {
+            border-bottom: 1px solid var(--border); padding: 7px 10px;
+            text-align: left; vertical-align: middle;
+        }
+        .tally thead th { color: var(--muted); font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+        .tally tbody th { font-weight: 500; white-space: nowrap; }
+        .tally .figure {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            text-align: right; white-space: nowrap; color: #eef4ff;
+        }
+        .tally .pct { color: var(--muted); width: 58px; }
+        .tally .barcell { width: 34%; min-width: 90px; }
+        .tally tr.is-zero th, .tally tr.is-zero .figure { color: var(--zero); }
+        .tally.wide tbody th { white-space: normal; }
+        .cat-icon { margin-right: 6px; }
+
+        .bar { background: rgba(255,255,255,0.07); border-radius: 999px; height: 7px; overflow: hidden; }
+        .bar span { display: block; height: 100%; background: var(--ice); border-radius: 999px; }
+        .bar.low span { background: var(--warm); }
+        .bar.zero span { background: transparent; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; }
+        .chip {
+            display: flex; align-items: center; gap: 7px;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 999px; padding: 5px 12px 5px 10px; font-size: 0.85rem;
+        }
+        .chip-icon { font-size: 1rem; }
+        .chip-n {
+            font-family: ui-monospace, Menlo, monospace; color: var(--ice);
+            font-weight: 700; min-width: 1.4em; text-align: right;
+        }
+        .chip.is-zero { border-color: rgba(252, 165, 165, 0.35); }
+        .chip.is-zero .chip-name { color: var(--zero); }
+        .chip.is-zero .chip-n { color: var(--zero); }
+
+        .closing { color: var(--muted); font-size: 0.86rem; margin: 44px 0 0; }
+
+        @media (max-width: 620px) {
+            .wrap { padding: 18px 14px 80px; }
+            .tally .barcell { display: none; }
+            .tally .pct { width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="mark">ELARA</span>
+        <span class="model">AE-1&alpha;</span>
+        <span class="spacer"></span>
+        <span class="stamp">観測のみ / 書き換えなし</span>
+    </div>
+
+    <div class="wrap">
+        <div class="intro">
+            <p>作ったときに考えていた姿と、いま実際に動いている姿。その差を見ています。</p>
+            <p class="quiet">読むだけで、何も書き換えません。どこへも送りません。勧めもしません。数と、そこにある事実だけを並べます。</p>
+        </div>
+
+        <div id="elara-body">
+            <p class="none">読み込んでいます…</p>
+        </div>
+    </div>
+
+    <!-- アプリのどこからもここへは来られない。開き方を知っている人だけが開く -->
+    <script type="module" src="js/app/elara.js"></script>
+</body>
+</html>

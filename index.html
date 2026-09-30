@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist CRM - Launchpad Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --theme-blend: 0%; /* 0% is Dark, 100% is Light */
+            --bg-dark: color-mix(in srgb, #f8fafc var(--theme-blend), #0f172a);
+            --card-bg: color-mix(in srgb, rgba(255, 255, 255, 0.08) var(--theme-blend), rgba(30, 41, 59, 0.5));
+            --text-main: color-mix(in srgb, #0f172a var(--theme-blend), #f1f5f9);
+            --text-dim: color-mix(in srgb, #475569 var(--theme-blend), #94a3b8);
+            --glass-border: color-mix(in srgb, rgba(15, 23, 42, 0.1) var(--theme-blend), rgba(255, 255, 255, 0.1));
+            
+            --accent-cyan: #00f2fe;
+            --accent-purple: #7367f0;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(115, 103, 240, 0.15) 0, transparent 50%);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            margin: 0 0 40px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            transition: var(--transition-smooth);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 40px 0 rgba(0, 242, 254, 0.15);
+        }
+
+        .card-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .card-tag.portal {
+            color: var(--accent-purple);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .arrow {
+            margin-top: auto;
+            padding-top: 16px;
+            font-weight: bold;
+            color: var(--accent-cyan);
+            transition: var(--transition-smooth);
+        }
+
+        .card:hover .arrow {
+            transform: translateX(4px);
+        }
+
+        .theme-selector {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Therapist CRM Gateway</h1>
+            <p>セラピスト向け顧客管理システム ゲートウェイ</p>
+        </header>
+
+        <main class="grid">
+            <a href="./product/" class="card">
+                <div class="card-tag">APPLICATION</div>
+                <h2>顧客管理アプリ (プロダクト)</h2>
+                <p>ソウルカラー選択、カルテ履歴、お支払管理など、日々のセラピー記録を行うためのスマホ最適化アプリケーションです。</p>
+                <div class="arrow">アプリを起動する &rarr;</div>
+            </a>
+
+            <a href="./management/99_Portal/" class="card">
+                <div class="card-tag portal">DEVELOPER PORTAL</div>
+                <h2>開発者向けポータル</h2>
+                <p>要件定義書、作業計画 (WBS)、実装履歴、インシデント報告など、プロジェクトの進捗を確認できるポータルです。</p>
+                <div class="arrow" style="color: var(--accent-purple);">ポータルを開く &rarr;</div>
+            </a>
+        </main>
+
+        <footer>
+            <div class="theme-selector">
+                <span style="font-size: 0.85rem; color: var(--text-dim);">🌙 Dark</span>
+                <input type="range" id="theme-slider" min="0" max="100" value="0" style="width: 120px; accent-color: var(--accent-cyan); cursor: pointer;" title="テーマ輝度ブレンド">
+                <span style="font-size: 0.85rem; color: var(--text-dim);">☀️ Light</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const themeSlider = document.getElementById('theme-slider');
+        const root = document.documentElement;
+
+        const savedBlend = localStorage.getItem('theme-blend') || '0';
+        themeSlider.value = savedBlend;
+        root.style.setProperty('--theme-blend', savedBlend + '%');
+
+        themeSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            root.style.setProperty('--theme-blend', val + '%');
+            localStorage.setItem('theme-blend', val);
+        });
+    </script>
+</body>
+</html>

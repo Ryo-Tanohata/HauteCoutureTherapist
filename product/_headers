@@ -1,0 +1,50 @@
+# ブラウザ側の守り（Cloudflare Pages が、配るときに付ける）
+#
+# 中身が漏れたときに取り返しがつかないのはカルテのほうなので、
+# 「万一なにかが紛れ込んでも、その場で止まる」ようにしておく。
+#
+# 直したら必ず、実物を開いて画面が壊れていないかを見ること。
+# CSP は書き間違えると、何も言わずに一部だけ動かなくなる。
+
+/*
+  # 読み込んでよい先を、名指しで決める。ここに無いものは全部止まる
+  #
+  #   script-src に 'unsafe-inline' を入れない … これが要。ページの中に
+  #     書かれた script は動かない。だから index.html から script の中身を
+  #     全部追い出して、js/app/aurora-boot.js に移した
+  #   script-src が 'self' だけ … 外から実行されるものは一切読まない。
+  #     marked は自前で持ち、Gemini は SDK ではなく窓口を直に叩いている
+  #   style-src の 'unsafe-inline' … 画面の中に style="" が225か所ある。
+  #     外に出すのは別の作業なので、いまは許している
+  #   img-src の data: と blob: … 写真の表示に使っている
+  #   connect-src … 置き場（同じ場所）と、生成AIの2社だけ
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+
+  # 中身の種類を、ブラウザに勝手に推測させない
+  X-Content-Type-Options: nosniff
+
+  # 他人のページの中に、このアプリをはめ込ませない
+  X-Frame-Options: DENY
+
+  # どこから来たかを、外へ知らせない（お客様の名前がURLに乗ることはないが、念のため）
+  Referrer-Policy: no-referrer
+
+  # 使っていない機能は、はじめから閉じておく
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+
+  # 一度 https で開いたら、次からも https で
+  Strict-Transport-Security: max-age=31536000
+
+  # 他所のページから、このページの窓を覗かせない
+  Cross-Origin-Opener-Policy: same-origin
+
+  # 他所のページから、このアプリの中身を読み込ませない
+  Cross-Origin-Resource-Policy: same-origin
+
+  # 検索に載せない。サロンのカルテを開く入口を、探せる場所に置かない
+  X-Robots-Tag: noindex, nofollow
+
+/index.html
+  # 画面そのものを端末に溜めない。共用のパソコンで開いたとき、
+  # 閉じたあとに戻るボタンで中身が出てしまうのを避ける
+  Cache-Control: no-store

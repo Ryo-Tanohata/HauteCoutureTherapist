@@ -1,0 +1,8 @@
+{
+  "name": "Therapist CRM",
+  "description": "セラピスト向け顧客管理システム ゲートウェイ & CRM アプリケーション",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

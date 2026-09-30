@@ -1,0 +1,14 @@
+node_modules/
+.agent/
+.DS_Store
+.env
+
+# ローカル専用のClaude Agent SDK環境（デプロイ対象外・プッシュしない）
+local-claude/
+
+# チャット履歴の自動保存（実行時に生成されるデータ）
+management/03_Implementation/chat_logs/
+
+# 毎日の星詠み更新が残す記録（scripts/daily-advice）
+logs/
+build/

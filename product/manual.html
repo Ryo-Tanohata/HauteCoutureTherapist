@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>取扱説明書 | Terre Mer KARTE</title>
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" href="images/icon-192.png">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b1120;
+            --panel: rgba(255, 255, 255, 0.035);
+            --border: rgba(255, 255, 255, 0.10);
+            --text: #e8edf7;
+            --muted: #9fb0c9;
+            --cyan: #00f2fe;
+            --purple: #a78bfa;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans JP', 'Inter', system-ui, sans-serif;
+            line-height: 1.85;
+            -webkit-text-size-adjust: 100%;
+        }
+        .topbar {
+            position: sticky; top: 0; z-index: 20;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            padding: 10px 16px;
+            background: rgba(11, 17, 32, 0.94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .topbar h1 { font-size: 1rem; margin: 0; font-weight: 700; letter-spacing: 0.02em; }
+        .back-link {
+            color: var(--cyan); text-decoration: none; font-weight: 600; font-size: 0.9rem;
+            border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 999px; padding: 4px 14px;
+            white-space: nowrap;
+        }
+        .search {
+            flex: 1 1 200px; min-width: 140px;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 999px; padding: 7px 14px; color: var(--text);
+            font-size: 0.9rem; font-family: inherit;
+        }
+        .search::placeholder { color: var(--muted); }
+
+        .layout { display: flex; gap: 28px; max-width: 1180px; margin: 0 auto; padding: 24px 16px 96px; }
+        nav.toc {
+            flex: 0 0 240px; position: sticky; top: 68px; align-self: flex-start;
+            max-height: calc(100vh - 96px); overflow-y: auto;
+            font-size: 0.86rem; line-height: 1.6;
+            border-right: 1px solid var(--border); padding-right: 16px;
+        }
+        nav.toc a {
+            display: block; color: var(--muted); text-decoration: none;
+            padding: 4px 8px; border-radius: 6px;
+        }
+        nav.toc a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        nav.toc a.lv3 { padding-left: 22px; font-size: 0.8rem; opacity: 0.85; }
+        nav.toc a.here { color: var(--cyan); background: rgba(0, 242, 254, 0.08); }
+
+        main { flex: 1 1 auto; min-width: 0; }
+        main h1 { font-size: 1.7rem; line-height: 1.4; margin: 0 0 8px; }
+        main h2 {
+            font-size: 1.25rem; margin: 44px 0 12px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border); scroll-margin-top: 76px;
+        }
+        main h3 { font-size: 1.03rem; margin: 26px 0 8px; color: var(--cyan); scroll-margin-top: 76px; }
+        main p { margin: 10px 0; }
+        main ul, main ol { padding-left: 1.35em; }
+        main li { margin: 4px 0; }
+        main strong { color: #fff; }
+        main code {
+            background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px;
+            font-size: 0.88em;
+        }
+        main hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+        main blockquote {
+            margin: 14px 0; padding: 10px 16px;
+            border-left: 3px solid var(--purple);
+            background: rgba(167, 139, 250, 0.07); border-radius: 0 10px 10px 0;
+            color: #dcd6f7;
+        }
+        main blockquote p { margin: 4px 0; }
+        .table-wrap { overflow-x: auto; margin: 14px 0; }
+        main table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        main th, main td {
+            border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top;
+        }
+        main th { background: rgba(255,255,255,0.05); font-weight: 700; white-space: nowrap; }
+        main a { color: var(--cyan); }
+
+        .manual-video {
+            margin: 14px 0 18px; padding: 10px;
+            background: rgba(0, 242, 254, 0.05);
+            border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px;
+        }
+        .manual-video figcaption {
+            font-size: 0.85rem; font-weight: 700; color: var(--cyan); margin-bottom: 8px;
+        }
+        .manual-video video {
+            width: 100%; max-width: 720px; display: block;
+            border-radius: 8px; background: #000;
+        }
+
+        .loading, .failed { color: var(--muted); padding: 40px 0; }
+        .failed strong { color: #ffb4b4; }
+        .no-hit { display: none; color: var(--muted); padding: 24px 0; }
+        section.hidden { display: none; }
+
+        @media (max-width: 860px) {
+            .layout { display: block; padding: 16px 14px 80px; }
+            nav.toc {
+                position: static; max-height: none; width: 100%;
+                border-right: 0; border-bottom: 1px solid var(--border);
+                padding: 0 0 14px; margin-bottom: 18px;
+            }
+            nav.toc a.lv3 { display: none; }
+            main h2 { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a class="back-link" href="index.html">← アプリへ戻る</a>
+        <h1>取扱説明書</h1>
+        <input type="search" id="manual-search" class="search" placeholder="調べたい言葉（例: 予約、控え、合言葉）">
+    </div>
+
+    <div class="layout">
+        <nav class="toc" id="manual-toc" aria-label="目次"></nav>
+        <main id="manual-body">
+            <p class="loading">読み込んでいます…</p>
+        </main>
+    </div>
+
+    <!-- 中身は docs/manual.md ひとつ。この画面も、右下の吹き出しも、同じものを見ている -->
+    <script src="js/vendor/marked/marked.min.js"></script>
+    <script src="js/app/manual.js"></script>
+</body>
+</html>

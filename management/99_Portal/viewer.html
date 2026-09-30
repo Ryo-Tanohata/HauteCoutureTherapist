@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --theme-blend: 0%; /* 0% is Dark, 100% is Light */
+            --bg-color: color-mix(in srgb, #f8fafc var(--theme-blend), #0f172a);
+            --card-bg: color-mix(in srgb, rgba(255, 255, 255, 0.9) var(--theme-blend), rgba(30, 41, 59, 0.9));
+            --text-color: color-mix(in srgb, #0f172a var(--theme-blend), #f1f5f9);
+            --glass-border: color-mix(in srgb, rgba(15, 23, 42, 0.1) var(--theme-blend), rgba(255, 255, 255, 0.1));
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            
+            --primary-color: #00f2fe;
+            --accent-color: #7367f0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', -apple-system, sans-serif;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        nav {
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateX(-4px);
+            border-color: var(--primary-color);
+        }
+
+        .back-btn::before {
+            content: '←';
+            margin-right: 8px;
+        }
+
+        .viewer-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 60px;
+            box-shadow: var(--shadow);
+            min-height: 60vh;
+        }
+
+        /* Markdown Styles */
+        .markdown-content {
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .markdown-content h1 {
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-top: 0;
+            letter-spacing: -1px;
+        }
+
+        .markdown-content h2 {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .markdown-content h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: var(--accent-color);
+            margin-right: 12px;
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .markdown-content code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
+        .markdown-content pre {
+            background: #020617;
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .markdown-content pre code {
+            background: transparent;
+            color: #e2e8f0;
+            padding: 0;
+        }
+
+        /* Hyper Gantt Styles */
+        .hyper-gantt {
+            background: #020617;
+            border-radius: 16px;
+            padding: 30px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: auto;
+            margin: 40px 0;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .hg-header {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+        }
+
+        .hg-row {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .hg-task-info {
+            padding-right: 20px;
+        }
+
+        .hg-task-id {
+            font-size: 0.6rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .hg-task-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hg-status-done {
+            color: #10b981;
+            font-size: 0.7rem;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 2px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .hg-timeline-track {
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .hg-bar {
+            position: absolute;
+            height: 12px;
+            top: -4px;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border-radius: 6px;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: #000;
+            font-weight: 800;
+        }
+
+        .tag-btn {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            background: rgba(0, 242, 254, 0.2);
+            border: 1px solid rgba(0, 242, 254, 0.5);
+            color: #00f2fe;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            pointer-events: none;
+        }
+        .taggable {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 0 -6px;
+        }
+        .taggable:hover {
+            background-color: rgba(0, 242, 254, 0.07);
+        }
+        .taggable:hover .tag-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .viewer-card { padding: 30px; }
+            .hg-header, .hg-row { grid-template-columns: 150px 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <a href="index.html" class="back-btn">ポータルに戻る</a>
+            <div style="display: inline-flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--glass-border); backdrop-filter: blur(10px);">
+                <span style="font-size: 0.85rem; color: var(--text-color);">🌙 Dark</span>
+                <input type="range" id="theme-slider" min="0" max="100" value="0" style="width: 100px; accent-color: var(--primary-color); cursor: pointer;" title="テーマ輝度ブレンド">
+                <span style="font-size: 0.85rem; color: var(--text-color);">☀️ Light</span>
+            </div>
+        </nav>
+
+        <script>
+            const themeSlider = document.getElementById('theme-slider');
+            const root = document.documentElement;
+
+            const savedBlend = localStorage.getItem('theme-blend') || '0';
+            themeSlider.value = savedBlend;
+            root.style.setProperty('--theme-blend', savedBlend + '%');
+
+            themeSlider.addEventListener('input', (e) => {
+                const val = e.target.value;
+                root.style.setProperty('--theme-blend', val + '%');
+                localStorage.setItem('theme-blend', val);
+            });
+        </script>
+
+        <article class="viewer-card">
+            <div id="content" class="markdown-content">
+                読み込み中...
+            </div>
+        </article>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark'
+        });
+
+        function parseMermaidGantt(code) {
+            const lines = code.split('\n');
+            const tasks = [];
+            let currentSection = '';
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('section')) {
+                    currentSection = trimmed.replace('section', '').trim();
+                } else if (trimmed.includes(':')) {
+                    const [name, params] = trimmed.split(':');
+                    const parts = params.split(',').map(p => p.trim());
+                    tasks.push({
+                        name: name.trim(),
+                        section: currentSection,
+                        status: parts[0],
+                        id: parts[1] || '',
+                        duration: parts[parts.length - 1]
+                    });
+                }
+            });
+            return tasks;
+        }
+
+        function createHyperGantt(tasks) {
+            let html = `<div class="hyper-gantt">
+                <div class="hg-header">
+                    <div>WBS ITEM / TASK</div>
+                    <div>TIMELINE (HYPER)</div>
+                </div>`;
+            
+            tasks.forEach((task, index) => {
+                const isDone = task.status === 'done' || task.status === 'active';
+                const offset = (index * 12) % 70;
+                const width = 25;
+
+                html += `
+                <div class="hg-row">
+                    <div class="hg-task-info">
+                        <div class="hg-task-id">${task.id || 'TASK-' + (index + 1)}</div>
+                        <div class="hg-task-name">
+                            ${task.status === 'done' ? '<span class="hg-status-done">DONE</span>' : ''}
+                            ${task.name}
+                        </div>
+                    </div>
+                    <div class="hg-timeline-track">
+                        <div class="hg-bar" style="left: ${offset}%; width: ${width}%;">
+                            ${task.duration || '1d'}
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+        async function loadMarkdown() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const filePath = urlParams.get('doc');
+            const contentDiv = document.getElementById('content');
+
+            if (!filePath) {
+                contentDiv.innerHTML = '<h1>Error</h1><p>ファイルが指定されていません。</p>';
+                return;
+            }
+
+            try {
+                // Cache busting to ensure fresh content
+                const response = await fetch(filePath + '?t=' + Date.now());
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const text = await response.text();
+                contentDiv.innerHTML = marked.parse(text);
+
+                // Re-initialize Mermaid
+                const codeBlocks = contentDiv.querySelectorAll('pre code.language-mermaid');
+                for (const block of codeBlocks) {
+                    const code = block.textContent;
+                    if (code.includes('gantt')) {
+                        const tasks = parseMermaidGantt(code);
+                        const hgHtml = createHyperGantt(tasks);
+                        block.parentElement.outerHTML = hgHtml;
+                    } else {
+                        const pre = block.parentElement;
+                        const div = document.createElement('div');
+                        div.className = 'mermaid';
+                        div.textContent = code;
+                        pre.replaceWith(div);
+                    }
+                }
+                setTimeout(() => {
+                    mermaid.run();
+                    // Syntax highlighting
+                    document.querySelectorAll('pre code').forEach((el) => {
+                        hljs.highlightElement(el);
+                    });
+                    // Line Tagging
+                    const elements = contentDiv.querySelectorAll('p, h1, h2, h3, li');
+                    elements.forEach(el => {
+                        el.style.position = 'relative';
+                        el.classList.add('taggable');
+                        const btn = document.createElement('button');
+                        btn.className = 'tag-btn';
+                        btn.innerHTML = '✨ Tag';
+                        el.appendChild(btn);
+
+                        el.onclick = (e) => {
+                            if (e.target.tagName === 'A' || window.getSelection().toString().trim() !== "") return;
+                            e.stopPropagation();
+                            if(window.auroraChat && window.auroraChat.insertIntoPrompt) {
+                                const cleanText = el.textContent.replace('✨ Tag', '').trim();
+                                window.auroraChat.insertIntoPrompt(cleanText);
+                            }
+                        };
+                    });
+                }, 100);
+            } catch (error) {
+                contentDiv.innerHTML = `<h1>Error</h1><p>${error.message}</p>`;
+            }
+        }
+
+        // Handle navigation and initial load
+        window.addEventListener('load', loadMarkdown);
+        window.addEventListener('popstate', loadMarkdown);
+    </script>
+
+    <!-- Aurora Dialogue Integration -->
+    <script type="module">
+        import { initAuroraChat } from '../../.agent/templates/floating-chat/integrations/entry-aurora.js';
+        initAuroraChat();
+    </script>
+</body>
+</html>
