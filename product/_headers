@@ -18,13 +18,14 @@
   #     外に出すのは別の作業なので、いまは許している
   #   img-src の data: と blob: … 写真の表示に使っている
   #   connect-src … 置き場（同じ場所）と、生成AIの2社だけ
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
 
   # 中身の種類を、ブラウザに勝手に推測させない
   X-Content-Type-Options: nosniff
 
-  # 他人のページの中に、このアプリをはめ込ませない
-  X-Frame-Options: DENY
+  # 他人のページの中に、このアプリをはめ込ませない。
+  # 同じアプリの中（「？」で取扱説明書を重ねて出す）だけは許す
+  X-Frame-Options: SAMEORIGIN
 
   # どこから来たかを、外へ知らせない（お客様の名前がURLに乗ることはないが、念のため）
   Referrer-Policy: no-referrer
