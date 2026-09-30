@@ -5141,6 +5141,63 @@ function initApp() {
     // 「未入力の印」から生年月日へ連れていくときにだけ残っている。
     // ふだん直すのは「この方のこと」の中の ✏️ から。
 
+    // ------------------------------------------------------------------
+    // 入力画面（モーダル）共通の見張り
+    //
+    // 外側に指が触れただけで、書きかけのカルテや予約が消えるのを防ぐ。
+    // 開いたときの中身を覚えておき、外側を押された時点で変わっていれば
+    // 確かめる。変わっていなければ、これまでどおりすぐ閉じる。
+    //
+    // 各画面の「外側を押したら閉じる」処理より先（キャプチャ段階）で受け、
+    // 閉じないと決めたらそこで止める。画面ごとに同じ処理を書かずに済む。
+    // 顧客登録は専用の確認があるので除く。確認の小窓（confirm-modal）も除く。
+    // ------------------------------------------------------------------
+    (function guardModalOutsideTaps() {
+        const SKIP = new Set(['customer-modal', 'confirm-modal']);
+        const signature = (modal) => {
+            const vals = Array.from(modal.querySelectorAll('input, textarea, select'))
+                .filter((el) => el.type !== 'file' && el.type !== 'button' && el.type !== 'submit')
+                .map((el) => (el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? '1' : '0') : el.value);
+            // 写真を足した・色やメニューを選んだ、のように入力欄に出ない変化も拾う
+            const picked = modal.querySelectorAll('img, .selected, .is-selected, .active, [aria-pressed="true"]').length;
+            return JSON.stringify([vals, picked]);
+        };
+        document.querySelectorAll('.modal-overlay').forEach((modal) => {
+            if (!modal.id || SKIP.has(modal.id)) return;
+            if (modal.dataset.unsavedGuard) return;   // 起動し直しても二重に付けない
+            modal.dataset.unsavedGuard = '1';
+            let baseline = null;
+            let touched = false;
+            const snap = () => { baseline = signature(modal); };
+            // 「開いた」を見て中身を覚える。開く処理が値を入れ終わってから覚えるよう、
+            // 変化の通知（処理が一段落したあとに来る）で取り、少し後にもう一度取り直す。
+            // 取り直しは、まだ何も触っていないときだけ（後から値が入る画面のため）。
+            new MutationObserver(() => {
+                const open = modal.classList.contains('active');
+                if (open && baseline === null) {
+                    touched = false;
+                    snap();
+                    setTimeout(() => { if (!touched && modal.classList.contains('active')) snap(); }, 400);
+                } else if (!open) {
+                    baseline = null;
+                }
+            }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+            ['input', 'change', 'click'].forEach((ev) => modal.addEventListener(ev, (e) => {
+                if (e.target !== modal) touched = true;
+            }, true));
+
+            modal.addEventListener('click', (e) => {
+                if (e.target !== modal || baseline === null) return;
+                if (signature(modal) === baseline) return;       // 何も変えていない
+                const ok = confirm('入力した内容はまだ保存されていません。\n保存せずに閉じますか？（入力した内容は消えます）');
+                if (!ok) {
+                    e.stopImmediatePropagation();                  // 閉じる処理まで届かせない
+                    e.preventDefault();
+                }
+            }, true);
+        });
+    })();
+
     // 顧客登録モーダルの「開いたときの中身」。閉じるときにこれと比べて、
     // 書きかけがあれば確かめる。外側に指が触れただけで、打った内容が
     // 消えてしまうのを防ぐため。
