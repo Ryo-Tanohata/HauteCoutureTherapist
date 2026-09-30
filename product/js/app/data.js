@@ -777,11 +777,38 @@ export function nextCustomerNo(customers = getCustomers()) {
     return `C-${String(max + 1).padStart(4, '0')}`;
 }
 
+/**
+ * 顧客No. を見比べるための形。前後の空白を落とし、全角を半角に、
+ * 英字を大文字にそろえる。「ｃ－０００６」と「C-0006」を同じ番号と見る。
+ */
+export function normalizeCustomerNo(value) {
+    return String(value == null ? '' : value)
+        .normalize('NFKC')
+        .replace(/[‐‑‒–—―ー−]/g, '-')
+        .trim()
+        .toUpperCase();
+}
+
+/**
+ * その番号をすでに持っている顧客を返す。いなければ null。
+ * 保管（アーカイブ）中の顧客も数える。戻したときに重なるため。
+ * exceptId には、いま編集している本人のIDを渡す。
+ */
+export function findCustomerNoOwner(customerNo, exceptId = null, customers = getCustomers()) {
+    const key = normalizeCustomerNo(customerNo);
+    if (!key) return null;
+    return customers.find((c) => c.id !== exceptId
+        && normalizeCustomerNo(c.customerNo) === key) || null;
+}
+
 export function addCustomer(name, kana = '', phone = '', memo = '', customerNo = '', birthday = '', soulColors = [], referrer = '', initialConsultation = '', birthMonth = '') {
     const customers = getCustomers();
     const newCustomer = {
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-        customerNo: customerNo || nextCustomerNo(customers),
+        // 手で決めた番号が、書き込む直前に埋まっていたら（別の端末で先に
+        // 使われたなど）、重ねずに次の空き番号にする。
+        customerNo: (customerNo && !findCustomerNoOwner(customerNo, null, customers))
+            ? normalizeCustomerNo(customerNo) : nextCustomerNo(customers),
         name,
         kana,
         phone,

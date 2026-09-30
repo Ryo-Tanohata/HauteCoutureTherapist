@@ -668,10 +668,13 @@
                 <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; border: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                         <div class="form-group" style="flex: 1; min-width: 140px;">
-                            <label for="input-customer-no">顧客No.<span class="field-locked-note">自動</span></label>
+                            <label for="input-customer-no">顧客No.<span class="field-locked-note">変更可</span></label>
                             <input type="text" id="input-customer-no" class="form-control" placeholder="自動発番"
-                                   readonly tabindex="-1" title="アプリが自動で決めます。書き換えられません。"
+                                   autocomplete="off" autocapitalize="characters" spellcheck="false"
+                                   title="そのままなら自動で決まります。書き換えもできます（同じ番号は使えません）。"
                                    style="font-size: 0.9rem;">
+                            <small id="customer-no-hint" class="customer-no-hint" aria-live="polite"
+                                   style="display: block; min-height: 1.1em; margin-top: 4px; font-size: 0.75rem; color: var(--text-secondary);"></small>
                         </div>
                         <div class="form-group" style="flex: 2; min-width: 200px;">
                             <label for="input-name">氏名 (必須)</label>

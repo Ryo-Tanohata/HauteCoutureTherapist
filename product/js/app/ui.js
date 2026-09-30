@@ -9,6 +9,7 @@ import {
     getNamePreference, saveNamePreference,
     SERVICE_CATEGORY_DEFS, getServiceCategories, getServiceCategoryDef,
     getLastSaveError, isStorageWritable, saveCustomers, onDataChanged, nextCustomerNo,
+    normalizeCustomerNo, findCustomerNoOwner,
     getDeletions, saveDeletions, RECORD_FIELDS, isFilledField,
     getLastBackupAt, markBackupDone, getBackupReminder, BACKUP_REMIND_DAYS,
     pruneOverwrittenList, sweepOverwritten, OVERWRITTEN_KEEP_DAYS,
@@ -4728,18 +4729,67 @@ function initApp() {
     });
 
     /**
-     * 顧客No. の欄を、見えるが触れない状態にする。
+     * 顧客No. の欄に値を入れる。書き換えはできる。
      *
-     * readonly にしてあるのは、disabled と違って値を読めるし、選んで
-     * 写せるため。番号を控えたい場面は実際にある。
+     * 新規のときに出しているのは「次に付く見込み」。そのまま登録すれば、
+     * 書き込む直前に空き番号を決め直す（別の端末で誰か増えていても重ならない）。
+     * 書き換えたときだけ、その番号を使う。見込みは dataset に控えておく。
      */
-    function lockCustomerNo(value) {
+    function setCustomerNoField(value, { suggested = false } = {}) {
         const el = document.getElementById('input-customer-no');
         if (!el) return;
         el.value = value || '';
-        el.readOnly = true;
-        el.tabIndex = -1;
-        el.title = 'アプリが自動で決めます。書き換えられません。';
+        el.dataset.suggested = suggested ? (value || '') : '';
+        el.classList.remove('is-invalid');
+        el.removeAttribute('aria-invalid');
+        renderCustomerNoHint('');
+    }
+
+    function renderCustomerNoHint(text, isError = false) {
+        const hint = document.getElementById('customer-no-hint');
+        if (!hint) return;
+        hint.textContent = text || '';
+        hint.style.color = isError ? '#ff8a8a' : 'var(--text-secondary)';
+    }
+
+    /**
+     * 顧客No. の欄を確かめる。問題があれば文言を返し、なければ null。
+     * 新規で見込みのまま・空のままなら、自動で決めるので確かめない。
+     */
+    function checkCustomerNoField() {
+        const el = document.getElementById('input-customer-no');
+        if (!el) return null;
+        const raw = normalizeCustomerNo(el.value);
+        const isNew = !editingCustomer;
+        if (isNew && (!raw || raw === normalizeCustomerNo(el.dataset.suggested))) return null;
+        if (!raw) return '顧客No. を空にはできません。';
+        const owner = findCustomerNoOwner(raw, editingCustomer ? editingCustomer.id : null);
+        if (owner) {
+            return `${raw} はすでに ${owner.name || '別の方'} 様${owner.isArchived ? '（保管中）' : ''}が使っています。`;
+        }
+        return null;
+    }
+
+    function refreshCustomerNoCheck() {
+        const el = document.getElementById('input-customer-no');
+        if (!el) return null;
+        const problem = checkCustomerNoField();
+        el.classList.toggle('is-invalid', Boolean(problem));
+        if (problem) el.setAttribute('aria-invalid', 'true');
+        else el.removeAttribute('aria-invalid');
+        if (problem) {
+            renderCustomerNoHint(`⚠ ${problem}`, true);
+        } else if (!editingCustomer && normalizeCustomerNo(el.value) === normalizeCustomerNo(el.dataset.suggested)) {
+            renderCustomerNoHint('');
+        } else {
+            renderCustomerNoHint(el.value.trim() ? '✓ 使える番号です' : '空のままなら自動で付きます');
+        }
+        return problem;
+    }
+
+    {
+        const el = document.getElementById('input-customer-no');
+        if (el) el.addEventListener('input', refreshCustomerNoCheck);
     }
 
     // [MINOR v1.10.0] 顧客モーダルを新規登録モードに戻す
@@ -4749,10 +4799,9 @@ function initApp() {
         if (customerModalTitle) customerModalTitle.textContent = '新規顧客の登録';
         if (btnSubmitCustomer) btnSubmitCustomer.textContent = '登録する';
         
-        // 顧客No. はアプリが決める。手で書き換えられると、同じ番号の人が
-        // 二人できたり、記録の並びと合わなくなったりする。
-        // 次に付く番号を見せておくが、触れないようにしておく。
-        lockCustomerNo(nextCustomerNo());
+        // 次に付く番号を見込みとして出す。書き換えれば、その番号で登録する。
+        // 同じ番号は保存のときに止める（checkCustomerNoField）。
+        setCustomerNoField(nextCustomerNo(), { suggested: true });
         fillIntakeFields(null);
 
         resetInputSoulColors(); // カラー選択リセット
@@ -4777,7 +4826,7 @@ function initApp() {
             if (el) el.value = value != null ? value : '';
         };
         setVal('input-name', customer.name);
-        lockCustomerNo(customer.customerNo != null ? customer.customerNo : '');
+        setCustomerNoField(customer.customerNo != null ? customer.customerNo : '');
         setVal('input-nickname', customer.nickname);
         setVal('input-kana', customer.kana);
         setVal('input-phone', customer.phone);
@@ -4854,12 +4903,24 @@ function initApp() {
                 showToast('お名前は必須項目です。', 'error');
                 return;
             }
-            // 編集のときは、いま付いている番号をそのまま持ち越す。
-            // 新規のときは渡さない。画面に出しているのはあくまで見込みで、
-            // 開いてから登録するまでの間に別の端末で誰か増えていれば、
-            // その見込みは古い。決めるのは書き込む直前でよい。
+            // 顧客No. は重ならないことを確かめてから書く。
+            // 新規で見込みのまま（または空）なら渡さない。画面の見込みは、
+            // 開いてから登録するまでの間に別の端末で誰か増えていれば古くなる。
+            // 決めるのは書き込む直前でよい（addCustomer が空き番号を選ぶ）。
             const customerNoEl = document.getElementById('input-customer-no');
-            const customerNo = editingCustomer && customerNoEl ? customerNoEl.value : '';
+            const noProblem = refreshCustomerNoCheck();
+            if (noProblem) {
+                showToast(noProblem, 'error');
+                if (customerNoEl) {
+                    customerNoEl.focus();
+                    customerNoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+            const typedNo = customerNoEl ? normalizeCustomerNo(customerNoEl.value) : '';
+            const customerNo = editingCustomer
+                ? typedNo
+                : (typedNo && typedNo !== normalizeCustomerNo(customerNoEl.dataset.suggested) ? typedNo : '');
             const nicknameEl = document.getElementById('input-nickname');
             const nickname = nicknameEl ? nicknameEl.value.trim() : '';
             const kanaEl = document.getElementById('input-kana');

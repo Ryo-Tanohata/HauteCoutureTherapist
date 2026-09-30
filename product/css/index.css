@@ -7003,3 +7003,10 @@ body.prep-hidden .visit-prep-mark {
     padding: 1px 8px;
     white-space: nowrap;
 }
+
+/* 顧客No. が重なっているとき */
+#input-customer-no.is-invalid {
+    border-color: #ff8a8a;
+    box-shadow: 0 0 0 1px rgba(255, 138, 138, 0.35);
+}
+:root.is-light #input-customer-no.is-invalid { border-color: #be123c; }
