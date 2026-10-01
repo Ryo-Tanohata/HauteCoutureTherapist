@@ -111,22 +111,43 @@
             <p class="small" id="oil-ok"></p>
             <p class="muted small" id="oil-out"></p>
         </article>
-        <button type="button" class="primary big" id="btn-claude">Claude に渡して見立てを作る</button>
-        <button type="button" class="ghost" id="btn-copy">依頼文をコピーするだけ</button>
-        <p class="note" id="claude-status" role="status" aria-live="polite">依頼文をコピーして Claude を開きます。入力欄に貼り付けて送ってください。セラピストご自身の Claude（サブスク）で答えが出るので、追加の料金はかかりません。</p>
+        <button type="button" class="primary big" id="btn-ask">見立てを頼む</button>
+        <div class="waiting" id="waiting" hidden role="status" aria-live="polite">
+            <div class="orbit" aria-hidden="true"><span></span></div>
+            <p class="waiting-title" id="waiting-title">ただいま、星を読んでいます…</p>
+            <p class="muted small" id="waiting-sub">空と季節を調べながら書いています。数分かかります。この画面のまま、お待ちください。</p>
+        </div>
+        <article class="reading" id="reading" hidden>
+            <div class="reading-head">
+                <span id="reading-who"></span>
+                <span id="reading-date"></span>
+            </div>
+            <div class="reading-body" id="reading-body"></div>
+        </article>
+        <p class="note" id="ask-status" role="status" aria-live="polite">Claude が書いて、ここに届けます。Lou さんの Claude（サブスク）で動くので、追加の料金はかかりません。</p>
+
+        <details class="manual-way">
+            <summary>うまく届かないとき：自分で Claude に渡す</summary>
+            <div class="manual-way-body">
+                <button type="button" class="ghost" id="btn-claude">依頼文をコピーして Claude を開く</button>
+                <button type="button" class="ghost" id="btn-copy">依頼文をコピーするだけ</button>
+                <p class="note" id="claude-status" role="status" aria-live="polite">開いた Claude の入力欄に貼り付けて送ってください。</p>
+                <div class="field">
+                    <label for="f-result">Claude の答えを貼り付けて残す</label>
+                    <textarea id="f-result" rows="5" placeholder="ここに貼ると、この端末に日付つきで残ります"></textarea>
+                </div>
+                <button type="button" class="secondary" id="btn-save">この端末に残す</button>
+            </div>
+        </details>
         <details class="prompt-peek">
             <summary>依頼文の中身を見る</summary>
             <pre id="prompt-text"></pre>
         </details>
 
         <div class="panel-head">
-            <h2>返ってきた見立てを残す</h2>
+            <h2>これまでの見立て</h2>
+            <span class="muted small">この端末だけ</span>
         </div>
-        <div class="field">
-            <label for="f-result">Claude の答えを貼り付け</label>
-            <textarea id="f-result" rows="6" placeholder="ここに貼ると、この端末に日付つきで残ります"></textarea>
-        </div>
-        <button type="button" class="secondary" id="btn-save">この端末に残す</button>
         <div id="history"></div>
 
         <p class="caution">強い痛み・しびれ・熱があるとき、数日たっても良くならないときは、医療機関へ。見立ては診断ではありません。</p>

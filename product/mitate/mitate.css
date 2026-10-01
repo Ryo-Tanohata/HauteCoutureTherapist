@@ -93,3 +93,19 @@ input:focus, textarea:focus { outline: none; border-color: var(--cyan); }
 .history-item .body { white-space: pre-wrap; font-family: 'Shippori Mincho', serif; font-size: 15px; line-height: 1.95; }
 .history-item .del { align-self: flex-end; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
 #history { display: flex; flex-direction: column; gap: 12px; }
+
+/* 頼んでから届くまで */
+.waiting { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 16px; border-radius: 14px; background: var(--card2); text-align: center; }
+.waiting[hidden] { display: none; }
+.waiting p { margin: 0; }
+.waiting-title { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 700; }
+.orbit { width: 54px; height: 54px; border-radius: 50%; border: 1px solid #3a4870; position: relative; animation: orbit 3.2s linear infinite; }
+.orbit span { position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .orbit { animation: none; } }
+.reading { display: flex; flex-direction: column; gap: 10px; padding: 18px 16px; border-radius: 14px; background: var(--card2); border: 1px solid #4a3f2a; }
+.reading[hidden] { display: none; }
+.reading-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--gold); }
+.reading-body { white-space: pre-wrap; font-family: 'Shippori Mincho', serif; font-size: 16px; line-height: 2; }
+.manual-way summary { cursor: pointer; color: var(--muted); font-size: 13px; min-height: 36px; }
+.manual-way-body { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }

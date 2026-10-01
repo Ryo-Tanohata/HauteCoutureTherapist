@@ -333,6 +333,94 @@ function copyOnly() {
     });
 }
 
+// ── 頼む（ルーティンが書いて、ここへ届ける） ─────────────────────
+const PENDING_KEY = 'mitate.pending.v1';
+const POLL_MS = 8000;
+let pollTimer = null;
+
+function setAskStatus(text) { $('ask-status').textContent = text; }
+
+function showWaiting(on, title, sub) {
+    $('waiting').hidden = !on;
+    if (title) $('waiting-title').textContent = title;
+    if (sub) $('waiting-sub').textContent = sub;
+    $('btn-ask').disabled = on;
+}
+
+/** 入口（Zero Trust）のログインが切れると、ログイン画面へ回される。そのときは中身が読めない */
+async function callApi(url, opts) {
+    const res = await fetch(url, Object.assign({ redirect: 'manual', cache: 'no-store' }, opts || {}));
+    if (res.type === 'opaqueredirect' || res.status === 0) {
+        throw new Error('入口のログインが切れています。ページを読み込み直して、ログインし直してください。');
+    }
+    let body = {};
+    try { body = await res.json(); } catch (e) { body = {}; }
+    if (!res.ok) throw new Error(body.detail || `うまく頼めませんでした（${res.status}）`);
+    return body;
+}
+
+async function askClaude() {
+    const request = buildPrompt();
+    showWaiting(true, 'ただいま、星を読んでいます…', '空と季節を調べながら書いています。数分かかります。この画面のまま、お待ちください。');
+    $('reading').hidden = true;
+    setAskStatus('');
+    try {
+        const { id } = await callApi('/api/mitate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request })
+        });
+        save(PENDING_KEY, { id, who: draft.who.trim(), at: Date.now() });
+        poll();
+    } catch (e) {
+        showWaiting(false);
+        setAskStatus(`${e.message} 下の「自分で Claude に渡す」からも頼めます。`);
+    }
+}
+
+async function poll() {
+    clearTimeout(pollTimer);
+    const pending = load(PENDING_KEY, null);
+    if (!pending || !pending.id) return;
+    showWaiting(true);
+    try {
+        const r = await callApi(`/api/mitate?id=${encodeURIComponent(pending.id)}`);
+        if (r.status === 'done') {
+            save(PENDING_KEY, null);
+            showWaiting(false);
+            showReading(pending.who, r.text);
+            return;
+        }
+        if (r.status === 'timeout' || r.status === 'unknown') {
+            save(PENDING_KEY, null);
+            showWaiting(false);
+            setAskStatus('時間内に届きませんでした。もう一度頼むか、下の「自分で Claude に渡す」を使ってください。');
+            return;
+        }
+    } catch (e) {
+        // 一時的な通信の途切れは、次の回にもう一度見る
+        setAskStatus(e.message);
+        if (/ログイン/.test(e.message)) { showWaiting(false); return; }
+    }
+    pollTimer = setTimeout(poll, POLL_MS);
+}
+
+/** 届いた見立てを出し、その場で端末にも残す（置き場からは受け取った時点で消えるため） */
+function showReading(who, text) {
+    const now = new Date();
+    const date = `${now.getFullYear()}年${fmtDate(now)}`;
+    $('reading-who').textContent = who || 'お客様';
+    $('reading-date').textContent = date;
+    $('reading-body').textContent = text;
+    $('reading').hidden = false;
+    const list = load(HISTORY_KEY, []);
+    list.push({ id: String(now.getTime()), who: who || '', date, text });
+    save(HISTORY_KEY, list.slice(-50));
+    renderHistory();
+    setAskStatus('見立てが届きました。この端末に残しました。');
+    $('reading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // ── 残した見立て ───────────────────────────────────────────
 function renderHistory() {
     const host = $('history');
@@ -383,6 +471,7 @@ function start() {
     bindFields();
     document.querySelectorAll('.step').forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.step))));
     document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.go))));
+    $('btn-ask').addEventListener('click', askClaude);
     $('btn-claude').addEventListener('click', sendToClaude);
     $('btn-copy').addEventListener('click', copyOnly);
     $('btn-save').addEventListener('click', saveResult);
@@ -393,6 +482,8 @@ function start() {
         renderChips();
         fillFields();
     });
+    // 頼んだまま閉じていたら、続きから待つ
+    if (load(PENDING_KEY, null)) { go(3); poll(); }
     // 星詠みが届いたら、開いている段を描き直す
     loadAdvice().then(() => {
         const open = document.querySelector('.panel:not([hidden])');
