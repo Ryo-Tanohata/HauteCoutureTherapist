@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b1222">
+<title>くらしの見立て｜Terre Mer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&amp;family=Zen+Kaku+Gothic+New:wght@400;500;700&amp;display=swap">
+<link rel="stylesheet" href="mitate.css">
+<link rel="icon" href="../images/salon-art-mark.webp">
+<script type="module" src="mitate.js"></script>
+</head>
+<body>
+<main class="wrap">
+    <header class="head">
+        <div class="brand">TERRE MER</div>
+        <h1>くらしの見立て</h1>
+        <p class="lead">星と、空と、食べたもの。その方の一日を、ひとつの物語に。</p>
+    </header>
+
+    <nav class="steps" aria-label="手順">
+        <button type="button" class="step" data-step="1" aria-current="step">1 聞き取る</button>
+        <button type="button" class="step" data-step="2">2 今日の材料</button>
+        <button type="button" class="step" data-step="3">3 見立てる</button>
+    </nav>
+
+    <!-- 1 聞き取る -->
+    <section class="panel" data-panel="1">
+        <div class="field">
+            <label for="f-who">お呼び名（本名は入れません）</label>
+            <input id="f-who" type="text" autocomplete="off" placeholder="例：はなちゃん">
+        </div>
+        <div class="field">
+            <label for="f-talk">今日のお話（世間話のままで）</label>
+            <textarea id="f-talk" rows="3" placeholder="例：昨日の朝から、背中を寝違えて痛い。右を向くとつらい。"></textarea>
+        </div>
+        <div class="field">
+            <span class="label">気になる場所</span>
+            <div class="chips" data-chips="parts"></div>
+        </div>
+        <div class="field">
+            <label for="f-ate">最近食べたもの</label>
+            <textarea id="f-ate" rows="2" placeholder="例：昨日の夜、国産の小ぶりな牡蠣（生）。こだわりのお店で。"></textarea>
+        </div>
+        <div class="field">
+            <span class="label">食のこだわり</span>
+            <div class="chips warm" data-chips="foodStyle"></div>
+        </div>
+        <div class="field">
+            <span class="label">体質</span>
+            <div class="chips" data-chips="body"></div>
+        </div>
+        <div class="field">
+            <span class="label">アロマで避けるもの（植物・ナッツなど）</span>
+            <div class="chips" data-chips="oilAllergy"></div>
+        </div>
+        <div class="field">
+            <span class="label">食べ物のアレルギー</span>
+            <div class="chips" data-chips="foodAllergy"></div>
+        </div>
+        <div class="field">
+            <label for="f-area">お住まいの地域（天気に使います）</label>
+            <input id="f-area" type="text" autocomplete="off" placeholder="例：東京都">
+        </div>
+        <div class="field">
+            <label for="f-birth">生年月日（任意・星の見立てに使います）</label>
+            <input id="f-birth" type="date">
+        </div>
+        <button type="button" class="primary" data-go="2">次へ：今日の材料を見る</button>
+        <div class="row-actions">
+            <button type="button" class="ghost" id="btn-clear">書いたものを消して、はじめから</button>
+        </div>
+        <p class="note">書いたものは、この端末の中だけに残ります。</p>
+    </section>
+
+    <!-- 2 今日の材料 -->
+    <section class="panel" data-panel="2" hidden>
+        <div class="panel-head">
+            <h2 id="mat-date">今日の材料</h2>
+            <span class="muted" id="mat-updated"></span>
+        </div>
+        <article class="card">
+            <h3 class="card-h">空と天気（星詠みより）</h3>
+            <ul class="mat-list" id="mat-sky"><li class="muted">読み込んでいます…</li></ul>
+        </article>
+        <article class="card">
+            <h3 class="card-h">季節と五行</h3>
+            <p id="mat-season"></p>
+            <p class="muted small" id="mat-season-note"></p>
+        </article>
+        <article class="card">
+            <h3 class="card-h warm">旬の食材</h3>
+            <div class="tags" id="mat-foods"></div>
+        </article>
+        <p class="dashed">ここは全員共通の材料です。お客様の情報は入っていません。空と天気は、毎朝の星詠み（ウェブで調べて自動で書き直すもの）から取っています。</p>
+        <div class="sources" id="mat-sources"></div>
+        <button type="button" class="primary" data-go="3">次へ：見立てる</button>
+    </section>
+
+    <!-- 3 見立てる -->
+    <section class="panel" data-panel="3" hidden>
+        <article class="card">
+            <h3 class="card-h">Claude に渡す内容</h3>
+            <ul class="mat-list" id="sum-list"></ul>
+            <p class="muted small">本名は渡しません。お呼び名だけです。</p>
+        </article>
+        <article class="card" id="oil-card">
+            <h3 class="card-h">使ってよい精油（体質で絞り込み済み）</h3>
+            <p class="small" id="oil-ok"></p>
+            <p class="muted small" id="oil-out"></p>
+        </article>
+        <button type="button" class="primary big" id="btn-claude">Claude に渡して見立てを作る</button>
+        <button type="button" class="ghost" id="btn-copy">依頼文をコピーするだけ</button>
+        <p class="note" id="claude-status" role="status" aria-live="polite">依頼文をコピーして Claude を開きます。入力欄に貼り付けて送ってください。セラピストご自身の Claude（サブスク）で答えが出るので、追加の料金はかかりません。</p>
+        <details class="prompt-peek">
+            <summary>依頼文の中身を見る</summary>
+            <pre id="prompt-text"></pre>
+        </details>
+
+        <div class="panel-head">
+            <h2>返ってきた見立てを残す</h2>
+        </div>
+        <div class="field">
+            <label for="f-result">Claude の答えを貼り付け</label>
+            <textarea id="f-result" rows="6" placeholder="ここに貼ると、この端末に日付つきで残ります"></textarea>
+        </div>
+        <button type="button" class="secondary" id="btn-save">この端末に残す</button>
+        <div id="history"></div>
+
+        <p class="caution">強い痛み・しびれ・熱があるとき、数日たっても良くならないときは、医療機関へ。見立ては診断ではありません。</p>
+    </section>
+</main>
+</body>
+</html>
