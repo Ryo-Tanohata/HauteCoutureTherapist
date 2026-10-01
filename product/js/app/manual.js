@@ -199,23 +199,57 @@ async function attachVideos() {
         });
         if (!head) return;
 
-        const box = document.createElement('figure');
-        box.className = 'manual-video';
-        const video = document.createElement('video');
-        video.src = v.file;
-        video.controls = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.preload = 'none';         // 開いた瞬間に12MB取りに行かせない
-        const cap = document.createElement('figcaption');
-        cap.textContent = `▶ 動画: ${v.title}（音は出ません）`;
-        box.appendChild(cap);
-        box.appendChild(video);
+        // 動画は、押したときだけ重ねて出す。説明書を読む邪魔をしない
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'manual-video-btn';
+        const len = v.sec ? `約${v.sec}秒・` : '';
+        btn.innerHTML = '<span class="mvb-play">▶</span><span class="mvb-text"></span>';
+        btn.querySelector('.mvb-text').textContent = `動画で見る（${len}声と字幕つき）`;
+        btn.addEventListener('click', () => openVideo(v));
 
         // 見出しのすぐ下、最初の説明文の前に置く
-        head.parentNode.insertBefore(box, head.nextSibling);
+        head.parentNode.insertBefore(btn, head.nextSibling);
     });
 }
+
+/** 動画を画面いっぱいに重ねて再生する。✕・外側・Esc で閉じる */
+function openVideo(v) {
+    closeVideo();
+    const wrap = document.createElement('div');
+    wrap.className = 'mv-player';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', `動画: ${v.title}`);
+    wrap.innerHTML = `
+        <div class="mv-box">
+            <div class="mv-head">
+                <span class="mv-title"></span>
+                <button type="button" class="mv-close" aria-label="動画を閉じる">✕ 閉じる</button>
+            </div>
+            <video controls playsinline preload="auto"></video>
+            <p class="mv-note">音が出ます。音を出せない場所では、字幕だけでも分かります。</p>
+        </div>`;
+    wrap.querySelector('.mv-title').textContent = `▶ ${v.id}. ${v.title}`;
+    const video = wrap.querySelector('video');
+    video.src = v.file;
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) closeVideo(); });
+    wrap.querySelector('.mv-close').addEventListener('click', closeVideo);
+    document.body.appendChild(wrap);
+    document.documentElement.classList.add('mv-open');
+    // 押した操作の続きなので、iPhone でも音つきで始められる
+    video.play().catch(() => {});
+}
+
+function closeVideo() {
+    const old = document.querySelector('.mv-player');
+    if (!old) return;
+    const video = old.querySelector('video');
+    if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+    old.remove();
+    document.documentElement.classList.remove('mv-open');
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeVideo(); });
 
 /**
  * 「？」から開いたときの見せ方：指された見出しと、その中身だけを出す。

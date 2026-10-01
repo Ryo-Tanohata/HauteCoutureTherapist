@@ -23,10 +23,12 @@ sections.forEach((sec) => console.log(`${sec.match} →`, Object.keys(sec.header
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
     '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
-    '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
+    '.png': 'image/png', '.mp4': 'video/mp4', '.webm': 'video/webm', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
 
 http.createServer((req, res) => {
-    const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+    // 本番は product/ が一番上なので、/images/… のような絶対パスは product/ の下を見る
+    let p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+    if (!fs.existsSync(p)) p = path.join(ROOT, 'product', decodeURIComponent(req.url.split('?')[0]));
     if (!p.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
     fs.readFile(p, (err, buf) => {
         if (err) { res.writeHead(404); return res.end('not found'); }

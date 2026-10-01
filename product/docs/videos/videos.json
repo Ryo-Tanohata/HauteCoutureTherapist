@@ -2,86 +2,187 @@
   {
     "id": "1-1",
     "title": "サロンの置き場につなぐ",
-    "file": "docs/videos/1-1.webm"
+    "file": "docs/videos/1-1.mp4",
+    "sec": 35
+  },
+  {
+    "id": "1-2",
+    "title": "2台目・3台目",
+    "file": "docs/videos/1-2.mp4",
+    "sec": 27
   },
   {
     "id": "1-4",
     "title": "名前の出し方を決める",
-    "file": "docs/videos/1-4.webm"
+    "file": "docs/videos/1-4.mp4",
+    "sec": 30
   },
   {
     "id": "2-1",
-    "title": "予約の電話が入ったとき",
-    "file": "docs/videos/2-1.webm"
+    "title": "予約の電話が入った",
+    "file": "docs/videos/2-1.mp4",
+    "sec": 50
   },
   {
     "id": "2-2",
     "title": "はじめてのお客様を登録する",
-    "file": "docs/videos/2-2.webm"
+    "file": "docs/videos/2-2.mp4",
+    "sec": 49
   },
   {
     "id": "2-3",
-    "title": "今日は誰が来るか見る",
-    "file": "docs/videos/2-3.webm"
+    "title": "今日は誰が来るか見たい",
+    "file": "docs/videos/2-3.mp4",
+    "sec": 31
   },
   {
     "id": "2-4",
-    "title": "前回どうだったか見る",
-    "file": "docs/videos/2-4.webm"
+    "title": "施術の前に、前回どうだったか見たい",
+    "file": "docs/videos/2-4.mp4",
+    "sec": 33
   },
   {
     "id": "2-5",
-    "title": "施術の前に、組み立てを考える",
-    "file": "docs/videos/2-5.webm"
+    "title": "施術の前に、組み立てを考えたい",
+    "file": "docs/videos/2-5.mp4",
+    "sec": 37
   },
   {
     "id": "2-6",
     "title": "施術のあと、記録を書く",
-    "file": "docs/videos/2-6.webm"
+    "file": "docs/videos/2-6.mp4",
+    "sec": 66
   },
   {
     "id": "2-7",
-    "title": "前に使った精油を調べる",
-    "file": "docs/videos/2-7.webm"
+    "title": "「前に使った精油は？」と聞かれた",
+    "file": "docs/videos/2-7.mp4",
+    "sec": 35
   },
   {
     "id": "2-8",
-    "title": "しばらく来ていない方を探す",
-    "file": "docs/videos/2-8.webm"
+    "title": "しばらく来ていない方を探したい",
+    "file": "docs/videos/2-8.mp4",
+    "sec": 28
   },
   {
     "id": "2-9",
-    "title": "金額を見る",
-    "file": "docs/videos/2-9.webm"
+    "title": "今月いくらになったか見たい",
+    "file": "docs/videos/2-9.mp4",
+    "sec": 19
   },
   {
     "id": "2-10",
-    "title": "アーカイブと削除のちがい",
-    "file": "docs/videos/2-10.webm"
+    "title": "もう来られなくなった方がいる",
+    "file": "docs/videos/2-10.mp4",
+    "sec": 28
   },
   {
     "id": "2-11",
-    "title": "施術メニューを増やす",
-    "file": "docs/videos/2-11.webm"
+    "title": "施術メニューを増やしたい",
+    "file": "docs/videos/2-11.mp4",
+    "sec": 40
   },
   {
     "id": "2-12",
-    "title": "使い方を人に教える",
-    "file": "docs/videos/2-12.webm"
+    "title": "使い方を人に教えたい",
+    "file": "docs/videos/2-12.mp4",
+    "sec": 31
   },
   {
     "id": "2-13",
-    "title": "お客様の情報を直す",
-    "file": "docs/videos/2-13.webm"
+    "title": "お客様の情報を直したい",
+    "file": "docs/videos/2-13.mp4",
+    "sec": 47
   },
   {
     "id": "2-14",
-    "title": "開発者にサンプルを見せる",
-    "file": "docs/videos/2-14.webm"
+    "title": "開発者にサンプルを見せたい",
+    "file": "docs/videos/2-14.mp4",
+    "sec": 30
   },
   {
-    "id": "6",
-    "title": "控え（バックアップ）を取る",
-    "file": "docs/videos/6.webm"
+    "id": "3-1",
+    "title": "👥 顧客一覧",
+    "file": "docs/videos/3-1.mp4",
+    "sec": 50
+  },
+  {
+    "id": "3-2",
+    "title": "📅 カレンダー",
+    "file": "docs/videos/3-2.mp4",
+    "sec": 36
+  },
+  {
+    "id": "3-3",
+    "title": "📋 カルテ（お客様の詳細）",
+    "file": "docs/videos/3-3.mp4",
+    "sec": 46
+  },
+  {
+    "id": "3-4",
+    "title": "✨ 星詠みメッセージ",
+    "file": "docs/videos/3-4.mp4",
+    "sec": 39
+  },
+  {
+    "id": "3-5",
+    "title": "🌿 星とアロマ",
+    "file": "docs/videos/3-5.mp4",
+    "sec": 21
+  },
+  {
+    "id": "3-6",
+    "title": "⚙️ 設定",
+    "file": "docs/videos/3-6.mp4",
+    "sec": 29
+  },
+  {
+    "id": "4-1",
+    "title": "2つの層（その人のこと・その日のこと）",
+    "file": "docs/videos/4-1.mp4",
+    "sec": 46
+  },
+  {
+    "id": "4-2",
+    "title": "その日のこと（1件の記録）",
+    "file": "docs/videos/4-2.mp4",
+    "sec": 45
+  },
+  {
+    "id": "4-3",
+    "title": "施術は 🐬 の中で選びます",
+    "file": "docs/videos/4-3.mp4",
+    "sec": 46
+  },
+  {
+    "id": "4-5",
+    "title": "メニューを足す・直す",
+    "file": "docs/videos/4-5.mp4",
+    "sec": 38
+  },
+  {
+    "id": "6-2",
+    "title": "控えを取る（やり方）",
+    "file": "docs/videos/6-2.mp4",
+    "sec": 28
+  },
+  {
+    "id": "6-5",
+    "title": "控えから戻す",
+    "file": "docs/videos/6-5.mp4",
+    "sec": 20
+  },
+  {
+    "id": "7-1",
+    "title": "他の端末に反映されない",
+    "file": "docs/videos/7-1.mp4",
+    "sec": 28
+  },
+  {
+    "id": "7-8",
+    "title": "金額が「未定」のまま",
+    "file": "docs/videos/7-8.mp4",
+    "sec": 34
   }
 ]
