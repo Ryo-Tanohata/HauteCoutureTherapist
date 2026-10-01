@@ -201,7 +201,33 @@ Vercel の Hobby プランは、規約で**個人・非商用の利用に限ら�
 
 営業中のサロンのカルテが載る場所としては、この条件に預けたままにできません。Cloudflare は**無料プランでも商用利用が認められています**。
 
-## 5. ディレクトリ構成
+## 5. くらしの見立て（`/mitate/`・検証中）
+
+星と、空と、食べたもの。その方の一日を、ひとつの物語として見立てる独立した画面です。
+KARTE（顧客管理）とは別の画面で、KARTE のデータは読みません。
+
+- **聞き取る → 今日の材料 → 見立てる** の3段。聞き取った内容と見立ては、その端末の中だけに残る（本名は聞かない）
+- **今日の材料**：空と天気は毎朝の星詠み（`product/data/advice/today.json` の【0】）、季節・五行・旬は `product/mitate/seasons.js`
+- **安全**：精油は KARTE と同じ `oil-safety.js` で先に絞る。食べ物のアレルギー・妊娠中の食の注意は依頼文の「守ること」に入れる
+- **語り口**：占いのように楽しめて艶のある文。栄養やオーガニックの効き目など確かなことは、比喩に混ぜず正確に書く
+
+### 見立ての作り方（2通り）
+
+| 方法 | 動き | 費用 |
+|---|---|---|
+| **見立てを頼む**（検証中） | `/api/mitate` が Claude Code のルーティンを API トリガーで起動 → Claude が書いて `/api/mitate-result` へ届ける → 画面が受け取る（数分） | ルーティンの持ち主のサブスク枠 |
+| **自分で Claude に渡す**（予備） | 依頼文をコピーして Claude を開き、貼って送る | 使う人のサブスク枠 |
+
+- ルーティンへの指示書：`scripts/mitate/ROUTINE.md`（語り口や決まりを直すときはここ）
+- 設定の手順（ルーティン・Cloudflare の変数・Zero Trust の例外）：`management/10_Operations/くらしの見立ての自動化.md`
+
+> **規約について（大事）**
+> 「見立てを頼む」は、いまは **Lou さんのサブスクで、Lou さん本人だけが検証で使う**前提です。
+> Claude Code の規約は、開発者が**ほかの利用者の代わりに** Pro・Max の資格で処理を回すことを認めていません。
+> **セラピストに使ってもらう前に、「自分で Claude に渡す」か、従量課金の API キーに切り替えること。**
+> （[Legal and compliance](https://code.claude.com/docs/en/legal-and-compliance)）
+
+## 6. ディレクトリ構成
 ```text
 helthcareapp/
 ├── .agent/              # AIエージェント開発用ルール・テンプレート
@@ -219,11 +245,18 @@ helthcareapp/
 │   │       ├── salon-store.js # 置き場との同期（合言葉・暗号化）
 │   │       └── ui.js          # UI制御モジュール
 │   └── index.html       # メインアプリケーション
+├── product/mitate/      # くらしの見立て（独立した画面）
+├── product/docs/videos/ # 取扱説明書の声つき動画（mp4）と一覧 videos.json
 ├── functions/
-│   └── api/sync.js      # 端末をまたぐ置き場の窓口（Cloudflare Pages・R2）
+│   ├── api/sync.js      # 端末をまたぐ置き場の窓口（Cloudflare Pages・R2）
+│   ├── api/mitate.js    # くらしの見立て：ルーティンを起動し、書き上がりを待つ
+│   └── api/mitate-result.js # くらしの見立て：ルーティンからの見立てを受け取る
 ├── product/data/advice/ # 生成済みの星詠みJSON（ブラウザはここを読む）
 ├── scripts/
-│   └── refresh-advice.js # 星詠みの定期生成スクリプト
+│   ├── refresh-advice.js # 星詠みの定期生成スクリプト
+│   ├── build-manual-videos.js # 取扱説明書の動画を録る（台本は manual-videos/scenes.js）
+│   ├── voice/           # 動画の声（VOICEVOX）と作り方 README
+│   └── mitate/ROUTINE.md # くらしの見立て：ルーティンが読む指示書
 ├── server/
 │   ├── advice.js        # 星詠みの生成・天体計算・ファイル保存
 │   ├── ai-provider.js   # 生成AIの切り替え（Claude優先・Gemini fallback）
@@ -232,7 +265,11 @@ helthcareapp/
 └── README.md
 ```
 
-## 6. 更新履歴 (Changelog)
+## 7. 更新履歴 (Changelog)
+- **v1.27.0** (2026-10-01) [MINOR]: 取扱説明書の声つき動画と、くらしの見立て（検証中）
+  - 取扱説明書の31項目に「▶ 動画で見る」。押すと重ねて再生する。声は VOICEVOX（冥鳴ひまり・春日部つむぎ・ずんだもん）の掛け合いで、字幕は画面の下の帯に出す。以前の声なし動画17本も録り直した。クレジットは動画の最後と説明書の末尾
+  - `/mitate/`「くらしの見立て」を追加。聞き取り・今日の材料・依頼文づくり・端末への保存
+  - 「見立てを頼む」：Claude Code のルーティンを API トリガーで起動し、書き上がりを受け取る窓口（`functions/api/mitate*.js`）。**いまは開発者本人の検証用。利用者に開く前に方式を切り替える**（README の 5 を参照）
 - **v1.26.0** (2026-08-08) [MINOR]: 使うAIとモデルを画面から選べるようにする (ISSUE-062)
   - ⚙️ 設定 → 🤖 AI の設定 に「使うAI」（おまかせ／このPCのClaudeログイン／Anthropic APIキー／Gemini APIキー）と「Claude のモデル」（Haiku・Sonnet・Opus）を追加。**星詠み・セッション提案・操作ガイドの3経路すべて**に効く。
   - これまでは**キーを登録すると、そのキーのAIが黙って最優先**になり、案内は「このPCのClaudeログイン」と出るのに実際はキーで答えていた。明示的に選ばれている時は、キーからの推定を止める。
