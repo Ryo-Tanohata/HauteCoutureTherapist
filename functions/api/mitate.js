@@ -52,7 +52,8 @@ async function fire(env, id, requestText) {
         method: 'POST',
         headers: {
             Authorization: `Bearer ${env.MITATE_ROUTINE_TOKEN}`,
-            'anthropic-beta': 'experimental-cc-routine-2026-04-01',
+            // ルーティン画面の見本の curl に出る値。変わったら環境変数で差し替えられる
+            'anthropic-beta': env.MITATE_ROUTINE_BETA || 'experimental-cc-routine-2026-04-01',
             'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json'
         },
@@ -95,7 +96,13 @@ export async function onRequest(context) {
         }
         if (!res.ok) {
             await bucket.delete(PREFIX + id);
-            return json({ error: 'fire-failed', detail: `Claude を起動できませんでした（${res.status}）` }, 502);
+            // 原因を見分けるため、相手の返事の頭だけ添える（合鍵は含まれない）
+            let why = '';
+            try { why = (await res.text()).replace(/\s+/g, ' ').slice(0, 160); } catch (e) { why = ''; }
+            const url = String(env.MITATE_ROUTINE_URL || '');
+            const shape = /^https:\/\/api\.anthropic\.com\/v1\/claude_code\/routines\/trig_[A-Za-z0-9]+\/fire$/.test(url)
+                ? '' : ' ／ MITATE_ROUTINE_URL の形が違います（…/routines/trig_…/fire で終わるはず）';
+            return json({ error: 'fire-failed', detail: `Claude を起動できませんでした（${res.status}）${shape}${why ? ` ／ ${why}` : ''}` }, 502);
         }
         return json({ id });
     }
